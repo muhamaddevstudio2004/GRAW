@@ -793,6 +793,7 @@ function showResults(){
       const theme=getPlayerCardTheme(players[idx]);
       div.className="spy-card"+(theme?' '+theme:'');
       div.style.animationDelay=(i*0.12)+"s";
+      const bgS=getPlayerCardBgStyle(players[idx]); if(bgS) div.style.cssText+=bgS;
       div.innerHTML=`
         <div class="spy-avatar-wrap"><img src="${avatars[playerAvatarIndexes[idx]]}" width="60" height="60"></div>
         <div class="spy-card-info">
@@ -1788,8 +1789,75 @@ function renderProfileFrameIcon(){
   el.style.background = bg;
   el.innerHTML = vipFrameIconSvg(currentUser.frame_style);
 }
+/* ══ CARD CUSTOM BACKGROUND (VIP) ══ */
+function cardBgClass(u){ return (u && u.card_bg_image) ? ' custom-bg-card' : ''; }
+function cardBgStyle(u){ return (u && u.card_bg_image) ? `background-image:linear-gradient(0deg, rgba(0,0,0,.4), rgba(0,0,0,.4)), url('${u.card_bg_image}');` : ''; }
+function getPlayerCardBgClass(name){
+  return (currentUser && isVipActive(currentUser) && currentUser.username === name && currentUser.card_bg_image) ? ' custom-bg-card' : '';
+}
+function getPlayerCardBgStyle(name){
+  return (currentUser && isVipActive(currentUser) && currentUser.username === name) ? cardBgStyle(currentUser) : '';
+}
+function renderCardBgUI(){
+  const preview = document.getElementById('vipCardBgPreview');
+  const removeBtn = document.getElementById('vipCardBgRemoveBtn');
+  if(!preview) return;
+  if(currentUser.card_bg_image){
+    preview.classList.add('has-img');
+    preview.innerHTML = `<img src="${currentUser.card_bg_image}" loading="lazy">`;
+    removeBtn.classList.remove('hidden');
+  } else {
+    preview.classList.remove('has-img');
+    preview.innerHTML = `<svg viewBox="0 0 24 24" fill="#999"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
+    removeBtn.classList.add('hidden');
+  }
+}
+function handleCardBgUpload(event){
+  if(!isVipActive(currentUser)){
+    vib('error');
+    showModal({title:"تایبەتە بە VIP", msg:"بۆ دانانی وێنەی کارتی خۆت پێویستە پاکێتی VIP چالاک بکەیت.", icon:"warn"});
+    event.target.value = '';
+    return;
+  }
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const w = 640, h = 220;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(w/img.width, h/img.height);
+      const dw = img.width*scale, dh = img.height*scale;
+      ctx.drawImage(img, (w-dw)/2, (h-dh)/2, dw, dh);
+      saveCardBgImage(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+async function saveCardBgImage(dataUrl){
+  vib('medium');
+  const { data: updatedUser, error } = await sb.from('app_users').update({ card_bg_image: dataUrl }).eq('id', currentUser.id).select().single();
+  if(error || !updatedUser){ vib('error'); showModal({title:"هەڵە", msg:"نەتوانرا وێنەکە هەڵبگیرێت.", icon:"err"}); return; }
+  currentUser = updatedUser;
+  vib('success');
+  renderAuthOrProfile();
+}
+async function removeCardBgImage(){
+  vib('medium');
+  const { data: updatedUser, error } = await sb.from('app_users').update({ card_bg_image: null }).eq('id', currentUser.id).select().single();
+  if(error || !updatedUser){ vib('error'); return; }
+  currentUser = updatedUser;
+  vib('success');
+  renderAuthOrProfile();
+}
+
 const vipCardThemes = [
-  { id:'default', label:'ئاسایی', color:'#f5f5f5' },
+  { id:'default', label:'ئاسایی' },
   { id:'fire', label:'ئاگرین 🔥', color:'linear-gradient(135deg,#0a0a0a,#c0392b)' },
   { id:'neon', label:'کارەبایی ⚡', color:'linear-gradient(135deg,#0a0a0a,#0d6efd)' },
   { id:'royal', label:'شاهانە 👑', color:'linear-gradient(135deg,#0a0a0a,#8a5cf6)' },
@@ -1813,13 +1881,13 @@ function renderVipCardThemePreview(){
   if(!box) return;
   const theme = currentUser.card_theme && currentUser.card_theme!=='default' ? currentUser.card_theme : '';
   box.innerHTML = `
-    <div class="player-item${theme?' theme-'+theme:''}">
+    <div class="player-item${theme?' theme-'+theme:''}${cardBgClass(currentUser)}" style="${cardBgStyle(currentUser)}">
       <div class="avatar"><img src="${avatarUrl(currentUser.avatar_seed)}" loading="lazy"></div>
       <div class="player-name">${currentUser.username}</div>
     </div>`;
 }
 async function selectVipCardTheme(themeId){
-  const { data: updatedUser } = await sb.from('app_users').update({ card_theme: themeId }).eq('id', currentUser.id).select().single();
+  const { data: updatedUser } = await sb.from('app_users').update({ card_theme: themeId, card_bg_image: null }).eq('id', currentUser.id).select().single();
   currentUser = updatedUser;
   renderAuthOrProfile();
 }
@@ -1972,6 +2040,7 @@ function renderAuthOrProfile(){
     renderVipAvatarGrid();
     renderVipThemeRow();
     renderVipCardThemeRow();
+    renderCardBgUI();
     const vTog = document.getElementById('vipVerifiedToggle');
     if(vTog) vTog.checked = !!currentUser.is_verified;
   } else {
@@ -2022,6 +2091,7 @@ function openDadga() {
       const theme = getPlayerCardTheme(players[idx]);
       div.className = 'spy-card'+(theme?' '+theme:'');
       div.style.animationDelay = (i * 0.12) + 's';
+      const bgS2=getPlayerCardBgStyle(players[idx]); if(bgS2) div.style.cssText+=bgS2;
       div.innerHTML = `
         <div class="spy-avatar-wrap"><img src="${avatars[playerAvatarIndexes[idx]]}" width="60" height="60"></div>
         <div class="spy-card-info">
@@ -2095,7 +2165,8 @@ function renderDadgaVoter() {
     if (i === dadgaCurrentVoterIdx) return;
     const div = document.createElement('div');
     const theme = getPlayerCardTheme(p);
-    div.className = 'dadga-suspect-item'+(theme?' '+theme:'');
+div.className = 'dadga-suspect-item'+getPlayerCardBgClass(p);
+    const bgS3=getPlayerCardBgStyle(p); if(bgS3) div.setAttribute('style', bgS3);
     div.id = 'dsusp_' + i;
     div.onclick = () => { vib('light'); selectSuspect(i); };
     div.innerHTML = `
@@ -2311,11 +2382,16 @@ function nextPhase3Spy() {
   updateDadgaStep(3);
   document.getElementById('dadgaPhase2').classList.add('hidden');
   document.getElementById('dadgaPhase3').classList.remove('hidden');
+  const spyTheme = getPlayerCardTheme(spyName);
+  document.getElementById('dadgaSpyRevealCard').className = 'dadga-spy-reveal'+(spyTheme?' '+spyTheme:'');
   document.getElementById('dadgaSpyAvatar').src = avatars[playerAvatarIndexes[spyIdx]];
   document.getElementById('dadgaSpyRevealName').innerText = spyName;
   document.getElementById('dadgaGuessInput').value = '';
-  const spyTheme = getPlayerCardTheme(spyName);
-  document.getElementById('dadgaSpyRevealCard').className = 'dadga-spy-reveal'+(spyTheme?' '+spyTheme:'');
+  const spyCardEl = document.getElementById('dadgaSpyRevealCard');
+  if(spyCardEl){
+    spyCardEl.className = 'dadga-spy-reveal'+getPlayerCardBgClass(spyName);
+    spyCardEl.setAttribute('style', getPlayerCardBgStyle(spyName));
+  }
 }
 
 function checkSpyGuess(adminSaysCorrect) {
@@ -2380,13 +2456,15 @@ function renderTieVoter() {
     if (name === voter) return;
     const idx = players.indexOf(name);
     const div = document.createElement('div');
-    const theme = getPlayerCardTheme(name);
-    div.className = 'dadga-suspect-item'+(theme?' '+theme:'');
+    const div = document.createElement('div');
+    div.className = 'dadga-suspect-item'+getPlayerCardBgClass(name);
+    const bgS4=getPlayerCardBgStyle(name); if(bgS4) div.setAttribute('style', bgS4);
     div.id = 'dsusp_' + idx;
     div.onclick = () => { vib('light'); selectSuspect(idx); };
     div.innerHTML = `
       <div class="dadga-suspect-avatar"><img src="${avatars[playerAvatarIndexes[idx]]}" loading="lazy"></div>
       <div class="dadga-suspect-name">${name}</div>
+
       <div class="dadga-suspect-check">
         <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
       </div>`;
@@ -3917,7 +3995,8 @@ function refreshLobbyPlayersUI(){
   box.innerHTML = '';
   onlinePlayers.forEach(p=>{
     const div = document.createElement('div');
-    div.className = 'player-item' + (isStale(p.last_seen_at, STALE_MS) ? ' is-disconnected' : '') + (p.card_theme && p.card_theme!=='default' ? ' theme-'+p.card_theme : '');
+    div.className = 'player-item' + (isStale(p.last_seen_at, STALE_MS) ? ' is-disconnected' : '') + (p.card_theme && p.card_theme!=='default' ? ' theme-'+p.card_theme : '') + cardBgClass(p);
+    div.setAttribute('style', cardBgStyle(p));
     div.setAttribute('data-player-row', p.client_id);
     const canKick = isHost && p.client_id !== CLIENT_ID;
     const pingMs = p.ping_ms || 0;
@@ -4093,7 +4172,9 @@ function showOnlineLastChance(room){
   document.getElementById('onlineLastChanceAvatar').src = accusedPlayer ? avatarUrl(accusedPlayer.avatar_seed) : '';
   document.getElementById('onlineLastChanceName').innerHTML = accusedPlayer ? (accusedPlayer.name + championBadgeInline(accusedPlayer.user_id)) : '';
   const accTheme = accusedPlayer && accusedPlayer.card_theme && accusedPlayer.card_theme!=='default' ? 'theme-'+accusedPlayer.card_theme : '';
-  document.getElementById('onlineLastChanceCard').className = 'dadga-spy-reveal'+(accTheme?' '+accTheme:'');
+  const accCard = document.getElementById('onlineLastChanceCard');
+  accCard.className = 'dadga-spy-reveal'+(accTheme?' '+accTheme:'')+cardBgClass(accusedPlayer);
+  accCard.setAttribute('style', cardBgStyle(accusedPlayer));
   const isMe = CLIENT_ID === room.accused_id;
   document.getElementById('onlineLastChanceSelfBox').classList.toggle('hidden', !isMe);
   document.getElementById('onlineLastChanceWaitBox').classList.toggle('hidden', isMe);
@@ -4380,7 +4461,8 @@ function refreshOnlineVoteList(){
     if(p.client_id === CLIENT_ID) return;
      const themeClass = p.card_theme && p.card_theme!=='default' ? ' theme-'+p.card_theme : '';
     const div = document.createElement('div');
-    div.className = 'dadga-suspect-item' + themeClass + (p.client_id === prevSelected ? ' selected' : '');
+    div.className = 'dadga-suspect-item' + themeClass + cardBgClass(p) + (p.client_id === prevSelected ? ' selected' : '');
+    div.setAttribute('style', cardBgStyle(p));
     if(p.client_id === prevSelected) stillValid = true;
     div.onclick = ()=>{ vib('light'); selectOnlineVote(p.client_id, div); };
     div.innerHTML = `<div class="dadga-suspect-avatar ${vipFrameClass(p.frame_style)}"><img src="${avatarUrl(p.avatar_seed)}"></div>
@@ -4496,7 +4578,7 @@ async function showOnlineReveal(room){
       const theme = p.card_theme && p.card_theme!=='default' ? ' theme-'+p.card_theme : '';
       const verifiedIco = p.is_verified ? ` ${verifiedBadgeSvg(16)}` : '';
       return `
-        <div class="spy-card${theme}" style="animation-delay:${i*0.12}s">
+        <div class="spy-card${theme}${cardBgClass(p)}" style="animation-delay:${i*0.12}s;${cardBgStyle(p)}">
           <div class="spy-avatar-wrap"><img src="${avatarUrl(p.avatar_seed)}" loading="lazy"></div>
           <div class="spy-card-info">
             <div class="spy-card-name">${p.name}${verifiedIco}${championBadgeInline(p.user_id)}</div>
@@ -4535,6 +4617,7 @@ function renderOnlineScoresSheet(players, round){
     const div = document.createElement('div');
     div.className = 'scores-row' + rankClass;
     div.style.animationDelay = (i * 0.06) + 's';
+    if(cardBgStyle(p)) div.setAttribute('style', div.getAttribute('style')+cardBgStyle(p));
     div.innerHTML = `
   ${newPts !== undefined && newPts !== 0 ? `<div class="scores-new-pts" style="${newPts < 0 ? 'background:linear-gradient(135deg,#ff3b3b,#c62828);box-shadow:0 3px 10px rgba(255,59,59,.35);' : newPts >= 2 ? 'background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 3px 10px rgba(34,197,94,.35);' : 'background:linear-gradient(135deg,#ffd400,#ffbc00);color:#111;box-shadow:0 3px 10px rgba(255,188,0,.35);'}">${newPts > 0 ? '+' : ''}${newPts}${newPts < 0 ? ' ✗' : ' ✓'}</div>` : ''}
       <div class="scores-rank">${rankSymbol}</div>
