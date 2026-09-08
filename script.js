@@ -1066,7 +1066,73 @@ function toKurdishNum(n){
   return String(n).split('').map(d => kurdishDigits[+d] ?? d).join('');
 }
 
-let currentStatCategory = 'games';
+let currentStatCategory = 'champion';
+let championRankMap = {}; // user_id -> rank (1-10)
+
+async function fetchChampionRanks(){
+  const { data: users } = await sb.from('app_users').select('id,total_games,spy_wins,detective_wins').limit(500);
+  if(!users) return;
+  const sorted = users.map(u=>({ id:u.id, score:(u.total_games||0)+(u.spy_wins||0)+(u.detective_wins||0) }))
+    .filter(u=>u.score>0)
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,10);
+  championRankMap = {};
+  sorted.forEach((u,i)=>{ championRankMap[u.id] = i+1; });
+}
+
+function championBadgeInline(userId){
+  if(!userId || !championRankMap[userId]) return '';
+  const rank = championRankMap[userId];
+  const cls = rank<=3 ? 'gold' : 'red';
+  return ` <span class="champion-badge-inline ${cls}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 4.86 5.1.5-3.9 3.4 1.2 5.02L12 13.1l-4.3 2.68 1.2-5.02-3.9-3.4 5.1-.5z"/></svg>چامپیۆن ${toKurdishNum(rank)}</span>`;
+}
+
+function computeChampionScore(u){
+  return (u.total_games||0) + (u.spy_wins||0) + (u.detective_wins||0);
+}
+function buildChampionBadgeFull(rank){
+  const cls = rank<=3 ? 'gold' : 'red';
+  return `<div class="champion-rank-badge ${cls}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 4.86 5.1.5-3.9 3.4 1.2 5.02L12 13.1l-4.3 2.68 1.2-5.02-3.9-3.4 5.1-.5z"/></svg>چامپیۆن ${toKurdishNum(rank)}</div>`;
+}
+function buildChampionRow(u, rank){
+  const frameClass = vipFrameClass(u.frame_style);
+  const themeClass = isVipActive(u) && u.card_theme && u.card_theme!=='default' ? ' theme-'+u.card_theme : '';
+  const verifiedIco = u.is_verified ? ` ${verifiedBadgeSvg(18)}` : '';
+  const score = computeChampionScore(u);
+  return `
+    <div class="player-item${themeClass}" style="margin-bottom:8px;">
+      <div class="avatar ${frameClass}"><div class="avatar-clip"><img src="${avatarUrl(u.avatar_seed)}" loading="lazy"></div></div>
+      <div class="player-name">${u.username}${verifiedIco}</div>
+      ${buildChampionBadgeFull(rank)}
+      <div class="online-stat-badge" style="margin-right:6px;">${score}</div>
+    </div>`;
+}
+function renderChampionStatCategory(box){
+  const sorted = [..._statUsersCache].map(u=>({...u, _score:computeChampionScore(u)})).filter(u=>u._score>0).sort((a,b)=>b._score-a._score);
+  let html = '';
+  if(currentUser){
+    const idx = sorted.findIndex(u=>u.username===currentUser.username);
+    const rank = idx>=0 ? idx+1 : null;
+    const score = computeChampionScore(currentUser);
+    html += `
+      <div class="stat-your-rank" style="border-color:#ffd70055;">
+        <div class="stat-your-rank-label">پلەی تۆ</div>
+        <div class="stat-your-rank-row">
+          <div class="avatar ${vipFrameClass(currentUser.frame_style)}"><div class="avatar-clip"><img src="${avatarUrl(currentUser.avatar_seed)}" loading="lazy"></div></div>
+          <div class="stat-your-rank-name">${currentUser.username}</div>
+          ${rank && rank<=10 ? buildChampionBadgeFull(rank) : `<div class="stat-your-rank-badge" style="background:#888;">#${rank?toKurdishNum(rank):'-'}</div>`}
+          <div class="stat-your-rank-val">${score}</div>
+        </div>
+      </div>`;
+  }
+  if(sorted.length === 0){
+    html += `<div class="stat-empty">هێشتا داتا نییە</div>`;
+  } else {
+    const top10 = sorted.slice(0,10);
+    html += `<div class="stat-section">` + top10.map((u,i)=>buildChampionRow(u,i+1)).join('') + `</div>`;
+  }
+  box.innerHTML = html;
+}
 const statCategoryConfig = {
   games: { key:'total_games', color:'#ffd400',
     icon:'<svg viewBox="0 0 24 24" width="20" height="20" fill="#ffd400"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>' },
@@ -1144,6 +1210,10 @@ function renderStatCategory(){
   const box = document.getElementById('onlineStatsContent');
   if(!box || !_statUsersCache) return;
 
+  if(currentStatCategory === 'champion'){
+    renderChampionStatCategory(box);
+    return;
+  }
   if(currentStatCategory === 'vip'){
     renderVipStatCategory(box);
     return;
@@ -2809,6 +2879,7 @@ async function reconnectOnlineSession(){
     subscribeRoom();
     await refreshLobbyPlayers();
     startPingLoop();
+    fetchChampionRanks();
 
     if(room.status === 'lobby'){
       document.getElementById('lobbyRoomCode').innerText = onlineRoomCode;
@@ -3194,7 +3265,7 @@ function sendChatMessage(text){
   if(now - lastChatSentAt < CHAT_COOLDOWN_MS) return;
   lastChatSentAt = now;
   const me = onlinePlayers.find(p=>p.client_id===CLIENT_ID);
-  const payload = { clientId: CLIENT_ID, name: me?me.name:'؟', avatarSeed: me?me.avatar_seed:CLIENT_ID, text: text.slice(0,80), ts: now, isVerified: me?!!me.is_verified:false, frameStyle: me?me.frame_style:'default' };
+  const payload = { clientId: CLIENT_ID, userId: me?me.user_id:null, name: me?me.name:'؟', avatarSeed: me?me.avatar_seed:CLIENT_ID, text: text.slice(0,80), ts: now, isVerified: me?!!me.is_verified:false, frameStyle: me?me.frame_style:'default' };
   roomChannel.send({ type:'broadcast', event:'chat_message', payload });
   appendChatMessage(payload, true);
   startChatCooldownUI(CHAT_COOLDOWN_MS);
@@ -3239,9 +3310,10 @@ onclick="vib('medium');toggleMutePlayer('${payload.clientId}')">
           : '<svg viewBox="0 0 24 24" width="13" height="13" fill="#888"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>'
         }</button>`
     : '';
+  const champBadge = championBadgeInline(payload.userId);
   const vipNameHtml = payload.isVerified
-    ? `<div class="chat-msg-name" style="color:#1877F2;display:flex;align-items:center;gap:4px;">${payload.name}${verifiedBadgeSvg(15)}</div>`
-    : `<div class="chat-msg-name">${payload.name}</div>`;
+    ? `<div class="chat-msg-name" style="color:#1877F2;display:flex;align-items:center;gap:4px;">${payload.name}${verifiedBadgeSvg(15)}${champBadge}</div>`
+    : `<div class="chat-msg-name">${payload.name}${champBadge}</div>`;
   div.innerHTML = `<div class="chat-msg-avatar ${vipFrameClass(payload.frameStyle)}"><img src="${avatarUrl(payload.avatarSeed)}" loading="lazy"></div>
     <div class="chat-msg-bubble" style="${payload.isVerified ? 'border:1.5px solid rgba(255,212,0,.5);background:linear-gradient(135deg,#fffbe8,#fff5cc);' : ''}">${isMine ? '' : vipNameHtml}<div>${payload.text}</div></div>
     ${muteBtnHtml}`;
@@ -3748,6 +3820,7 @@ async function joinOnlineRoomByCode(code, name){
 /* ── لۆبی + ڕیئلتایم ── */
 let currentRoomMaxPlayers = 10;
 async function enterLobby(){
+  fetchChampionRanks();
   showScreen('onlineLobbyScreen');
   document.getElementById('lobbyRoomCode').innerText = onlineRoomCode;
   document.getElementById('lobbyRoomCodeBox').classList.toggle('hidden', roomIsPublic);
@@ -3858,7 +3931,7 @@ function refreshLobbyPlayersUI(){
     const verifiedIco = p.is_verified ? ` ${verifiedBadgeSvg(20)}` : '';
     const muteIco = p.is_muted ? ` <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#c62828" opacity=".85"/><line x1="3" y1="3" x2="21" y2="21" stroke="#fff7cf" stroke-width="2.4"/></svg>` : '';
     div.innerHTML = `<div class="avatar-disc-wrap"><div class="avatar ${vipFrameClass(p.frame_style)}" style="position:relative;"><img src="${avatarUrl(p.avatar_seed)}"></div><div class="disc-badge-lobby">🔌</div></div>
-      <div class="player-name">${p.name}${verifiedIco}<span data-mute-emoji="${p.client_id}">${muteIco}</span></div>
+      <div class="player-name">${p.name}${verifiedIco}${championBadgeInline(p.user_id)}<span data-mute-emoji="${p.client_id}">${muteIco}</span></div>
       <div class="lobby-ping-badge ${pc}" data-ping="${p.client_id}" style="background:rgba(0,0,0,.05);display:flex;align-items:center;gap:4px;">${crownIco}${pingMs>0?pingMs+' ms':'...'}</div>
       ${muteBtn}
       ${canKick ? `<button class="remove-player" onclick="vib('medium');kickPlayer('${p.client_id}','${p.name}')">&#x2715;</button>` : ''}`;
@@ -4018,7 +4091,7 @@ function showOnlineLastChance(room){
   showChatFab();
   const accusedPlayer = onlinePlayers.find(p=>p.client_id === room.accused_id);
   document.getElementById('onlineLastChanceAvatar').src = accusedPlayer ? avatarUrl(accusedPlayer.avatar_seed) : '';
-  document.getElementById('onlineLastChanceName').innerText = accusedPlayer ? accusedPlayer.name : '';
+  document.getElementById('onlineLastChanceName').innerHTML = accusedPlayer ? (accusedPlayer.name + championBadgeInline(accusedPlayer.user_id)) : '';
   const accTheme = accusedPlayer && accusedPlayer.card_theme && accusedPlayer.card_theme!=='default' ? 'theme-'+accusedPlayer.card_theme : '';
   document.getElementById('onlineLastChanceCard').className = 'dadga-spy-reveal'+(accTheme?' '+accTheme:'');
   const isMe = CLIENT_ID === room.accused_id;
@@ -4151,7 +4224,7 @@ function renderReadyStatus(){
         <div class="ready-check"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
         <div class="disc-badge">🔴</div>
       </div>
-       <div class="ready-name">${p.name}${p.is_verified ? ` ${verifiedBadgeSvg(15)}` : ''}</div>
+       <div class="ready-name">${p.name}${p.is_verified ? ` ${verifiedBadgeSvg(15)}` : ''}</div>${championBadgeInline(p.user_id)}
       <div class="ready-ping ${pingClass(pingMs)}" data-ping="${p.client_id}">${pingMs>0?pingMs+' ms':'...'}</div>`;
     box.appendChild(slot);
   });
@@ -4311,7 +4384,7 @@ function refreshOnlineVoteList(){
     if(p.client_id === prevSelected) stillValid = true;
     div.onclick = ()=>{ vib('light'); selectOnlineVote(p.client_id, div); };
     div.innerHTML = `<div class="dadga-suspect-avatar ${vipFrameClass(p.frame_style)}"><img src="${avatarUrl(p.avatar_seed)}"></div>
-      <div class="dadga-suspect-name">${p.name}${p.is_verified ? ` ${verifiedBadgeSvg(18)}` : ''}</div>
+      <div class="dadga-suspect-name">${p.name}${p.is_verified ? ` ${verifiedBadgeSvg(18)}` : ''}${championBadgeInline(p.user_id)}</div>
       <div class="dadga-suspect-check"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>`;
     list.appendChild(div);
   });
@@ -4426,7 +4499,7 @@ async function showOnlineReveal(room){
         <div class="spy-card${theme}" style="animation-delay:${i*0.12}s">
           <div class="spy-avatar-wrap"><img src="${avatarUrl(p.avatar_seed)}" loading="lazy"></div>
           <div class="spy-card-info">
-            <div class="spy-card-name">${p.name}${verifiedIco}</div>
+            <div class="spy-card-name">${p.name}${verifiedIco}${championBadgeInline(p.user_id)}</div>
             <div class="spy-card-tag"><svg viewBox="0 0 24 24"><path d="M12 2L4 7v5c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V7l-8-5z"/></svg>سیخور</div>
           </div>
           <div class="spy-shield"><svg viewBox="0 0 24 24"><path d="M12 2L4 7v5c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V7l-8-5z"/></svg></div>
