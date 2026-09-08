@@ -1750,6 +1750,17 @@ background: rgba(0,0,0,.2);
 .vip-frame-electric::before{ background: conic-gradient(from 0deg, #00e5ff, #0d6efd 25%, #00e5ff 50%, #003a5c 75%, #00e5ff); }
 @keyframes vipRingSpin{ to { transform: rotate(360deg); } }
 .vip-mini-badge{position:absolute;bottom:-3px;left:-3px;display:flex;align-items:center;justify-content:center;z-index:2;}
+.vip-cardbg-wrap{display:flex;gap:10px;align-items:center;margin-top:12px;}
+.vip-cardbg-preview{width:60px;height:60px;border-radius:16px;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,.06);border:2px dashed rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.vip-cardbg-preview.has-img{border-style:solid;border-color:#ffd400;}
+.vip-cardbg-preview img{width:100%;height:100%;object-fit:cover;}
+.vip-cardbg-preview svg{width:22px;height:22px;}
+.vip-cardbg-actions{flex:1;display:flex;flex-direction:column;gap:6px;}
+.vip-cardbg-btn{height:38px;border-radius:12px;border:none;font-size:12px;font-weight:800;font-family:'Noto Sans Arabic',sans-serif;cursor:pointer;}
+.vip-cardbg-btn.upload{background:#ffd400;color:#111;}
+.vip-cardbg-btn.remove{background:rgba(255,255,255,.08);color:#ff8080;}
+.custom-bg-card{background-size:cover !important;background-position:center !important;background-repeat:no-repeat !important;}
+.custom-bg-card .player-name,.custom-bg-card .dadga-suspect-name,.custom-bg-card .spy-card-name{color:#fff !important;text-shadow:0 1px 4px rgba(0,0,0,.5);}
 .vip-lock-badge{
   position:absolute;top:14px;left:14px;z-index:2;
   display:inline-flex;align-items:center;gap:5px;
@@ -3440,6 +3451,15 @@ background: linear-gradient(160deg, #ffffff 0%, #fafafa 40%, #fff9f0 100%);
         <div class="vip-section-title">🔥 کارتی لۆبی</div>
         <div class="vip-theme-row" id="vipCardThemeRow"></div>
         <div id="vipCardThemePreview" style="margin-top:12px;"></div>
+
+        <div class="vip-cardbg-wrap">
+          <div class="vip-cardbg-preview" id="vipCardBgPreview" onclick="document.getElementById('vipCardBgInput').click()"></div>
+          <div class="vip-cardbg-actions">
+            <button class="vip-cardbg-btn upload" onclick="vib('medium');document.getElementById('vipCardBgInput').click()">وێنەی دڵخوازت زیادبکە</button>
+            <button class="vip-cardbg-btn remove hidden" id="vipCardBgRemoveBtn" onclick="vib('medium');removeCardBgImage()">گەڕانەوە بۆ ڕەنگی ئاسایی</button>
+          </div>
+        </div>
+        <input type="file" id="vipCardBgInput" accept="image/*" class="hidden" onchange="handleCardBgUpload(event)">
 
         <div class="vip-mega-divider"></div>
 
