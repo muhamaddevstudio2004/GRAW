@@ -639,6 +639,15 @@ select {
 .stat-chip[data-cat="spy"].active{background:#ff3b3b;color:#fff;}
 .stat-chip[data-cat="detective"].active{background:#3b82f6;color:#fff;}
 .stat-chip[data-cat="vip"].active{background:#4fc3f7;color:#fff;}
+.champion-badge-inline{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;vertical-align:middle;white-space:nowrap;}
+.champion-badge-inline.gold{background:linear-gradient(135deg,#ffd700,#c8960a);color:#3a2a00;box-shadow:0 2px 8px rgba(200,150,10,.4);}
+.champion-badge-inline.red{background:linear-gradient(135deg,#ff4d4d,#c62828);color:#fff;box-shadow:0 2px 8px rgba(198,40,40,.35);}
+.champion-badge-inline svg{width:11px;height:11px;flex-shrink:0;}
+.champion-rank-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:800;flex-shrink:0;}
+.champion-rank-badge.gold{background:linear-gradient(135deg,#ffd700,#c8960a);color:#3a2a00;box-shadow:0 3px 10px rgba(200,150,10,.35);}
+.champion-rank-badge.red{background:linear-gradient(135deg,#ff4d4d,#c62828);color:#fff;box-shadow:0 3px 10px rgba(198,40,40,.3);}
+.champion-rank-badge svg{width:13px;height:13px;flex-shrink:0;}
+.stat-chip[data-cat="champion"].active{background:linear-gradient(135deg,#ffd700,#c8960a);color:#3a2a00;}
 .vip-days-badge{
   display:inline-flex;align-items:center;justify-content:center;
   min-width:36px;height:30px;padding:0 12px;
@@ -3943,7 +3952,11 @@ background: linear-gradient(160deg, #ffffff 0%, #fafafa 40%, #fff9f0 100%);
   <div id="statsContent" class="hidden"></div>
   <div id="onlineStatsWrap">
     <div class="stat-cat-chips" id="statCatChips">
-      <button class="stat-chip active" data-cat="games" onclick="vib();switchStatCategory('games')">
+      <button class="stat-chip active" data-cat="champion" onclick="vib();switchStatCategory('champion')">
+        <svg viewBox="0 0 24 24"><path d="M12 2l1.9 4.86 5.1.5-3.9 3.4 1.2 5.02L12 13.1l-4.3 2.68 1.2-5.02-3.9-3.4 5.1-.5z"/></svg>
+        چامپیۆن
+      </button>
+      <button class="stat-chip" data-cat="games" onclick="vib();switchStatCategory('games')">
         <svg viewBox="0 0 24 24" width="15" height="15"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         چالاکترین
       </button>
