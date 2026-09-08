@@ -24,6 +24,46 @@
   });
 })();
 
+/* ══ PWA INSTALL MODAL ══ */
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+function openInstallModal(){
+  document.getElementById('installOverlay').classList.add('active');
+}
+function closeInstallModal(){
+  document.getElementById('installOverlay').classList.remove('active');
+  sessionStorage.setItem('sexur_install_shown', '1');
+}
+
+async function triggerAndroidInstall(){
+  if(!deferredInstallPrompt){
+    showModal({title:"دواتر هەوڵبدەرەوە", msg:"دابەزاندنی ڕاستەوخۆ ئێستا بەردەست نییە لەسەر ئەم وێبگەڕە. تکایە لە Chrome کردەوە بکەرەوە.", icon:"warn"});
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if(outcome === 'accepted'){
+    vib('success');
+    closeInstallModal();
+  }
+  deferredInstallPrompt = null;
+}
+
+function maybeShowInstallModal(){
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(isStandalone) return;
+  if(sessionStorage.getItem('sexur_install_shown')) return;
+  setTimeout(()=>{
+    openInstallModal();
+  }, 1500);
+}
+window.addEventListener('load', maybeShowInstallModal);
+
 /* ── VIBRATION ── */
 function vib(type='light'){
   if(!('vibrate' in navigator))return;
