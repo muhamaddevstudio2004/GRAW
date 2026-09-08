@@ -1204,6 +1204,28 @@ background: rgba(0,0,0,.2);
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ══ INSTALL APP MODAL ══ */
+.install-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:5500;opacity:0;pointer-events:none;transition:.3s;padding:20px;}
+.install-overlay.active{opacity:1;pointer-events:auto;}
+.install-sheet{background:#fff;border-radius:32px;padding:clamp(22px,5.5vw,32px);width:100%;max-width:420px;box-shadow:0 24px 70px rgba(0,0,0,.25);transform:scale(.9) translateY(20px);transition:transform .35s cubic-bezier(.34,1.3,.64,1);max-height:88vh;overflow-y:auto;}
+.install-overlay.active .install-sheet{transform:scale(1) translateY(0);}
+.install-header{text-align:center;margin-bottom:clamp(18px,4.5vw,26px);}
+.install-icon{width:64px;height:64px;border-radius:20px;overflow:hidden;margin:0 auto 14px;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+.install-icon img{width:100%;height:100%;object-fit:cover;}
+.install-title{font-size:clamp(19px,5vw,24px);font-weight:800;color:#111;margin-bottom:5px;}
+.install-sub{font-size:var(--fs-sm);color:#888;font-weight:700;}
+.install-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
+.install-card{display:flex;align-items:center;gap:14px;background:#f7f8fa;border:1.5px solid #eef0f3;border-radius:20px;padding:14px 16px;}
+.install-card-icon{width:46px;height:46px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,.06);}
+.install-card-icon svg{width:24px;height:24px;}
+.install-card-body{flex:1;min-width:0;}
+.install-card-title{font-size:var(--fs-base);font-weight:800;color:#111;}
+.install-card-sub{font-size:12px;color:#999;font-weight:700;margin-top:1px;}
+.install-card-btn{height:40px;padding:0 18px;border-radius:999px;border:none;font-size:13px;font-weight:800;flex-shrink:0;white-space:nowrap;font-family:'Noto Sans Arabic',sans-serif;}
+.install-card-btn.btn-active{background:#2563eb;color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.35);}
+.install-card-btn.btn-soon{background:#eee;color:#999;}
+.install-close-btn{width:100%;height:50px;border:none;border-radius:18px;background:#f5f5f5;color:#666;font-size:var(--fs-base);font-weight:800;font-family:'Noto Sans Arabic',sans-serif;}
+
 /* CUSTOM MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;z-index:2000;opacity:0;pointer-events:none;transition:.25s;}
 .modal-overlay.active{opacity:1;pointer-events:auto;}
@@ -3791,6 +3813,50 @@ background: linear-gradient(160deg, #ffffff 0%, #fafafa 40%, #fff9f0 100%);
     <div class="info-step"><div class="info-num">٤</div><div class="info-text"><span class="info-spy-badge">سیخور</span> وشەکەی نازانێت. یاریزانی ئاسایی دەبێت وشەکە وەسف بکات بەبێ ئەوەی ڕاستەوخۆ وشەکە ئاشکرا بکات.</div></div>
     <div class="info-step"><div class="info-num">٥</div><div class="info-text">کاتەکە تەواو بوو، یاریزانەکان دەنگ دەدەن بۆ ئەوەی سیخورەکە دیاری بکەن. ئەگەر سیخورەکە دیاری کرا — یاریزانی ئاسایی براوەیە! ئەگەرنا — <span class="info-spy-badge">سیخور</span> براوەیە!</div></div>
     <button class="info-close" onclick="vib();closeInfo()">تێگەیشتم ✓</button>
+  </div>
+</div>
+
+<!-- INSTALL APP MODAL -->
+<div class="install-overlay" id="installOverlay">
+  <div class="install-sheet">
+    <div class="install-header">
+      <div class="install-icon"><img src="sexur.webp" alt="سیخور"></div>
+      <div class="install-title">ئەپی سیخور دابەزێنە</div>
+      <div class="install-sub">یاریەکە هەمیشە لای خۆت هەڵبگرە</div>
+    </div>
+    <div class="install-cards">
+      <div class="install-card">
+        <div class="install-card-icon">
+          <svg viewBox="0 0 24 24" fill="#3ddc84"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-2.86-1.21-6.08-1.21-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48C3.3 11.25 1.28 14.44 1 18h22c-.28-3.56-2.3-6.75-5.4-8.52zM7 15.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/></svg>
+        </div>
+        <div class="install-card-body">
+          <div class="install-card-title">ئەندرۆید</div>
+          <div class="install-card-sub">دابەزاندنی ڕاستەوخۆ</div>
+        </div>
+        <button class="install-card-btn btn-active" id="installAndroidBtn" onclick="vib('medium');triggerAndroidInstall()">دابەزاندن</button>
+      </div>
+      <div class="install-card">
+        <div class="install-card-icon">
+          <svg viewBox="0 0 24 24" fill="#00adef"><path d="M3 5.5L10.5 4.5V11.5H3V5.5M11.5 4.35L21 3V11.5H11.5V4.35M3 12.5H10.5V19.5L3 18.5V12.5M11.5 12.5H21V21L11.5 19.65V12.5Z"/></svg>
+        </div>
+        <div class="install-card-body">
+          <div class="install-card-title">کۆمپیوتەر (ویندۆز)</div>
+          <div class="install-card-sub">بەمزووانە بەردەست دەبێت</div>
+        </div>
+        <button class="install-card-btn btn-soon" disabled>بەمزووانە</button>
+      </div>
+      <div class="install-card">
+        <div class="install-card-icon">
+          <svg viewBox="0 0 24 24" fill="#111"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        </div>
+        <div class="install-card-body">
+          <div class="install-card-title">ئایفۆن</div>
+          <div class="install-card-sub">بەمزووانە بەردەست دەبێت</div>
+        </div>
+        <button class="install-card-btn btn-soon" disabled>بەمزووانە</button>
+      </div>
+    </div>
+    <button class="install-close-btn" onclick="vib();closeInstallModal()">دواتر</button>
   </div>
 </div>
 
