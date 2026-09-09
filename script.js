@@ -2456,7 +2456,6 @@ function renderTieVoter() {
     if (name === voter) return;
     const idx = players.indexOf(name);
     const div = document.createElement('div');
-    const div = document.createElement('div');
     div.className = 'dadga-suspect-item'+getPlayerCardBgClass(name);
     const bgS4=getPlayerCardBgStyle(name); if(bgS4) div.setAttribute('style', bgS4);
     div.id = 'dsusp_' + idx;
