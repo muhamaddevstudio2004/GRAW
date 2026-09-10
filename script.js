@@ -622,7 +622,7 @@ function renderPlayers(){
   const box=document.getElementById("playersBox");
   const frag=document.createDocumentFragment();
   players.forEach((p,i)=>{
-    const avatarUrl=avatars[playerAvatarIndexes[i]];
+    const avatarUrl=getPlayerAvatarUrl(p, playerAvatarIndexes[i]);
     const div=document.createElement("div");
     div.className="player-item";
     div.innerHTML=`<div class="avatar"><img src="${avatarUrl}" loading="lazy" width="52" height="52"></div>
@@ -697,7 +697,7 @@ function showPlayer(){
   document.getElementById("turnPlayer").innerText=players[currentIndex];
   document.getElementById("playerCounter").innerText=`${currentIndex+1} / ${players.length}`;
   document.getElementById("categoryBadge").innerText=selectedCategory;
-  const avatarUrl=avatars[playerAvatarIndexes[currentIndex]];
+  const avatarUrl=getPlayerAvatarUrl(players[currentIndex], playerAvatarIndexes[currentIndex]);
   document.getElementById("avatarFront").innerHTML=`<img src="${avatarUrl}">`;
   document.getElementById("avatarBack").innerHTML=`<img src="${avatarUrl}">`;
   if(spyIndexes.includes(currentIndex)){
@@ -795,7 +795,7 @@ function showResults(){
       div.style.animationDelay=(i*0.12)+"s";
       const bgS=getPlayerCardBgStyle(players[idx]); if(bgS) div.style.cssText+=bgS;
       div.innerHTML=`
-        <div class="spy-avatar-wrap"><img src="${avatars[playerAvatarIndexes[idx]]}" width="60" height="60"></div>
+        <div class="spy-avatar-wrap"><img src="${getPlayerAvatarUrl(players[idx], playerAvatarIndexes[idx])}" width="60" height="60"></div>
         <div class="spy-card-info">
           <div class="spy-card-name">${players[idx]}</div>
           <div class="spy-card-tag"><svg viewBox="0 0 24 24"><path d="M12 2L4 7v5c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V7l-8-5z"/></svg>سیخور</div>
@@ -995,7 +995,7 @@ function renderStats() {
         : topSpies.map(([name, count], i) => `
           <div class="stat-player-row" style="animation-delay:${i * 0.06}s">
             <div class="stat-player-avatar">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}" loading="lazy">
+              <img src="${statPlayerAvatarUrl(name)}" loading="lazy">
             </div>
             <div class="stat-player-name">${name}</div>
             <div class="stat-player-badge spy-badge">
@@ -1018,7 +1018,7 @@ function renderStats() {
           <div class="stat-player-row" style="animation-delay:${i * 0.06}s">
             <div class="stat-rank-num">${i + 1}</div>
             <div class="stat-player-avatar">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}" loading="lazy">
+              <img src="${statPlayerAvatarUrl(name)}" loading="lazy">
             </div>
             <div class="stat-player-name">${name}</div>
             <div class="stat-player-badge game-badge">
@@ -1564,6 +1564,18 @@ function getPlayerCardTheme(name){
   }
   return '';
 }
+function getPlayerAvatarUrl(name, fallbackIdx){
+  if(currentUser && isVipActive(currentUser) && currentUser.username === name && currentUser.avatar_seed){
+    return avatarUrl(currentUser.avatar_seed);
+  }
+  return avatars[fallbackIdx];
+}
+function statPlayerAvatarUrl(name){
+  if(currentUser && isVipActive(currentUser) && currentUser.username === name && currentUser.avatar_seed){
+    return avatarUrl(currentUser.avatar_seed);
+  }
+  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
+}
 function vipFrameIconSvg(id){
   if(id==='royal') return '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5zm0 2h14v2H5v-2z" fill="#ffd400"/></svg>';
   if(id==='spy') return '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 2L4 7v5c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V7l-8-5z" fill="#ff3b3b"/></svg>';
@@ -2093,7 +2105,7 @@ function openDadga() {
       div.style.animationDelay = (i * 0.12) + 's';
       const bgS2=getPlayerCardBgStyle(players[idx]); if(bgS2) div.style.cssText+=bgS2;
       div.innerHTML = `
-        <div class="spy-avatar-wrap"><img src="${avatars[playerAvatarIndexes[idx]]}" width="60" height="60"></div>
+        <div class="spy-avatar-wrap"><img src="${getPlayerAvatarUrl(players[idx], playerAvatarIndexes[idx])}" width="60" height="60"></div>
         <div class="spy-card-info">
           <div class="spy-card-name">${players[idx]}</div>
           <div class="spy-card-tag"><svg viewBox="0 0 24 24"><path d="M12 2L4 7v5c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V7l-8-5z"/></svg>سیخور</div>
@@ -2155,7 +2167,7 @@ function updateDadgaStep(active) {
 function renderDadgaVoter() {
   const voter = players[dadgaCurrentVoterIdx];
   const avIdx = playerAvatarIndexes[dadgaCurrentVoterIdx];
-  document.getElementById('dadgaVoterAvatar').src = avatars[avIdx];
+  document.getElementById('dadgaVoterAvatar').src = getPlayerAvatarUrl(voter, avIdx);
   document.getElementById('dadgaVoterName').innerText = voter;
 
   // لیستی بەرکەوتەکان — خۆی ناتوانێت بە خۆی دەنگ بدات
@@ -2171,7 +2183,7 @@ div.className = 'dadga-suspect-item'+getPlayerCardBgClass(p);
     div.onclick = () => { vib('light'); selectSuspect(i); };
     div.innerHTML = `
       <div class="dadga-suspect-avatar">
-        <img src="${avatars[playerAvatarIndexes[i]]}" loading="lazy">
+        <img src="${getPlayerAvatarUrl(p, playerAvatarIndexes[i])}" loading="lazy">
       </div>
       <div class="dadga-suspect-name">${p}</div>
       <div class="dadga-suspect-check">
@@ -2248,7 +2260,7 @@ function showDadgaResult() {
       const div = document.createElement('div');
       div.className = 'dadga-tally-row';
       div.innerHTML = `
-        <div class="dadga-tally-avatar"><img src="${avatars[playerAvatarIndexes[idx]]}" loading="lazy"></div>
+        <div class="dadga-tally-avatar"><img src="${getPlayerAvatarUrl(name, playerAvatarIndexes[idx])}" loading="lazy"></div>
         <div class="dadga-tally-name">${name}</div>
         <div class="dadga-tally-bar-wrap"><div class="dadga-tally-bar" style="width:${(count/maxV)*100}%"></div></div>
         <div class="dadga-tally-count">${count}</div>`;
@@ -2285,7 +2297,7 @@ function showDadgaResult() {
     const div = document.createElement('div');
     div.className = 'dadga-tally-row';
     div.innerHTML = `
-      <div class="dadga-tally-avatar"><img src="${avatars[playerAvatarIndexes[idx]]}" loading="lazy"></div>
+      <div class="dadga-tally-avatar"><img src="${getPlayerAvatarUrl(name, playerAvatarIndexes[idx])}" loading="lazy"></div>
       <div class="dadga-tally-name">${name}</div>
       <div class="dadga-tally-bar-wrap"><div class="dadga-tally-bar" style="width:${(count/maxV)*100}%"></div></div>
       <div class="dadga-tally-count">${count}</div>`;
@@ -2313,7 +2325,7 @@ function goToPhase3() {
   document.getElementById('dadgaPhase2').classList.add('hidden');
   document.getElementById('dadgaPhase3').classList.remove('hidden');
 
-  document.getElementById('dadgaSpyAvatar').src = avatars[playerAvatarIndexes[accusedIdx]];
+  document.getElementById('dadgaSpyAvatar').src = getPlayerAvatarUrl(dadgaAccused, playerAvatarIndexes[accusedIdx]);
   document.getElementById('dadgaSpyRevealName').innerText = dadgaAccused;
   document.getElementById('dadgaGuessInput').value = '';
 }
@@ -2384,7 +2396,7 @@ function nextPhase3Spy() {
   document.getElementById('dadgaPhase3').classList.remove('hidden');
   const spyTheme = getPlayerCardTheme(spyName);
   document.getElementById('dadgaSpyRevealCard').className = 'dadga-spy-reveal'+(spyTheme?' '+spyTheme:'');
-  document.getElementById('dadgaSpyAvatar').src = avatars[playerAvatarIndexes[spyIdx]];
+  document.getElementById('dadgaSpyAvatar').src = getPlayerAvatarUrl(spyName, playerAvatarIndexes[spyIdx]);
   document.getElementById('dadgaSpyRevealName').innerText = spyName;
   document.getElementById('dadgaGuessInput').value = '';
   const spyCardEl = document.getElementById('dadgaSpyRevealCard');
@@ -2443,7 +2455,7 @@ function startTieVote() {
 
 function renderTieVoter() {
   const voter = players[dadgaCurrentVoterIdx];
-  document.getElementById('dadgaVoterAvatar').src = avatars[playerAvatarIndexes[dadgaCurrentVoterIdx]];
+  document.getElementById('dadgaVoterAvatar').src = getPlayerAvatarUrl(players[dadgaCurrentVoterIdx], playerAvatarIndexes[dadgaCurrentVoterIdx]);
   document.getElementById('dadgaVoterName').innerText = voter;
   dadgaSelectedIdx = -1;
   document.getElementById('dadgaVoteBtn').classList.remove('ready');
@@ -2461,9 +2473,8 @@ function renderTieVoter() {
     div.id = 'dsusp_' + idx;
     div.onclick = () => { vib('light'); selectSuspect(idx); };
     div.innerHTML = `
-      <div class="dadga-suspect-avatar"><img src="${avatars[playerAvatarIndexes[idx]]}" loading="lazy"></div>
+      <div class="dadga-suspect-avatar"><img src="${getPlayerAvatarUrl(name, playerAvatarIndexes[idx])}" loading="lazy"></div>
       <div class="dadga-suspect-name">${name}</div>
-
       <div class="dadga-suspect-check">
         <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
       </div>`;
@@ -2584,16 +2595,15 @@ function renderScores() {
     const rankClass = rank <= 3 ? ` rank-${rank}` : '';
     const rankSymbol = rank === 1 ? '١' : rank === 2 ? '٢' : rank === 3 ? '٣' : rank + '';
     const newPts = lastRoundPoints[p.name];
-    const avatarSeed = encodeURIComponent(p.name);
-
-    const div = document.createElement('div');
+    const avSrc = statPlayerAvatarUrl(p.name);
+    const div = document.createElement("div");
     div.className = 'scores-row' + rankClass;
     div.style.animationDelay = (i * 0.06) + 's';
     div.innerHTML = `
   ${newPts !== undefined && newPts !== 0 ? `<div class="scores-new-pts" style="${newPts < 0 ? 'background:linear-gradient(135deg,#ff3b3b,#c62828);box-shadow:0 3px 10px rgba(255,59,59,.35);' : newPts >= 2 ? 'background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 3px 10px rgba(34,197,94,.35);' : 'background:linear-gradient(135deg,#ffd400,#ffbc00);color:#111;box-shadow:0 3px 10px rgba(255,188,0,.35);'}">${newPts > 0 ? '+' : ''}${newPts}${newPts < 0 ? ' ✗' : ' ✓'}</div>` : ''}
       <div class="scores-rank">${rankSymbol}</div>
-      <div class="scores-avatar">
-        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=${avatarSeed}" loading="lazy">
+         <div class="scores-avatar">
+        <img src="${avSrc}" loading="lazy">
       </div>
       <div class="scores-name">${p.name}</div>
       <div class="scores-pts-wrap">
@@ -2823,10 +2833,9 @@ function showGameover() {
   const winnerEl = document.getElementById('gameoverWinner');
   if (topEntry) {
     const [name, pts] = topEntry;
-    const seed = encodeURIComponent(name);
     winnerEl.innerHTML = `
       <div class="gameover-winner-avatar">
-        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}">
+        <img src="${statPlayerAvatarUrl(name)}">
       </div>
       <div class="gameover-winner-info">
         <div class="gameover-winner-label">🏆 براوەی یاری</div>
@@ -2894,7 +2903,7 @@ function showStarter() {
   if(starterBag.length === 0) starterBag = shuffleArray(players.map((_,i)=>i));
   const starter = starterBag.shift();
   document.getElementById("starterName").innerText = players[starter];
-  document.getElementById("starterAvatar").src = avatars[playerAvatarIndexes[starter]];
+  document.getElementById("starterAvatar").src = getPlayerAvatarUrl(players[starter], playerAvatarIndexes[starter]);
   const titleEl = document.getElementById("screen4").querySelector(".title");
   if (titleEl) titleEl.innerText = `خولی ${currentRound} / ${totalRounds}`;
   resetTimerUI();
