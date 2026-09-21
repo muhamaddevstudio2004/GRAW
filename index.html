@@ -1,179 +1,424 @@
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#ffd84d">
-<title>یارییەکانی کوردی</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@700;800&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans Arabic',sans-serif;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
-:root{
-  --gap: clamp(12px, 3vw, 18px);
-  --radius: clamp(20px, 4.5vw, 28px);
-}
-body{
-  background:linear-gradient(160deg,#0d0d0d 0%,#1a1a1a 100%);
-  min-height:100vh;
-  color:#fff;
-  overflow-x:hidden;
-  padding-bottom:40px;
-}
-.app-wrap{max-width:540px;margin:0 auto;padding:0 var(--gap);}
-@media(min-width:600px){.app-wrap{max-width:640px;}}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KurdPay | بازاڕی دیجیتاڵی گەیمەران</title>
+    
+    <!-- Fonts: Noto Sans Arabic for Kurdish Support -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons: Boxicons (Clean, No Emojis) -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- Tailwind CSS (CDN for Single File) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Noto Sans Arabic"', 'sans-serif'] },
+                    colors: {
+                        primary: '#6366f1', // Indigo accent
+                        dark: '#0f172a',
+                        darker: '#020617',
+                        card: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-/* HEADER */
-.hub-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:20px 0 18px;
-}
-.hub-title{font-size:clamp(22px,6vw,28px);font-weight:800;color:#fff;}
-.hub-sub{font-size:13px;font-weight:700;color:rgba(255,255,255,.4);margin-top:2px;}
-
-/* GRID */
-.game-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:var(--gap);
-  margin-top:8px;
-}
-.game-card{
-  position:relative;
-  border-radius:var(--radius);
-  overflow:hidden;
-  min-height:clamp(180px,42vw,220px);
-  cursor:pointer;
-  padding:clamp(18px,4.5vw,24px);
-  display:flex;flex-direction:column;justify-content:flex-start;
-  transition:transform .2s cubic-bezier(.34,1.56,.64,1);
-  box-shadow:0 10px 30px rgba(0,0,0,.35);
-}
-.game-card:active{transform:scale(.96);}
-.game-card-title{
-  font-size:clamp(18px,4.8vw,22px);
-  font-weight:800;
-  line-height:1.2;
-  margin-bottom:8px;
-  position:relative;z-index:2;
-}
-.game-card-underline{
-  width:34px;height:4px;border-radius:4px;
-  margin-bottom:auto;
-  position:relative;z-index:2;
-}
-.game-card-art{
-  position:absolute;
-  bottom:-8px;left:-8px;right:-8px;
-  height:62%;
-  display:flex;align-items:flex-end;justify-content:center;
-  pointer-events:none;
-}
-.game-card-art img{
-  width:100%;height:100%;object-fit:cover;object-position:top;
-  -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,.0) 0%, rgba(0,0,0,1) 22%);
-  mask-image:linear-gradient(to bottom, rgba(0,0,0,.0) 0%, rgba(0,0,0,1) 22%);
-}
-.game-card-badge{
-  position:absolute;top:14px;left:14px;z-index:3;
-  padding:5px 12px;border-radius:999px;
-  font-size:11px;font-weight:800;
-  box-shadow:0 4px 12px rgba(0,0,0,.3);
-}
-.badge-new{background:#ff3b3b;color:#fff;}
-.badge-popular{background:#3b82f6;color:#fff;}
-
-.empty-note{
-  text-align:center;color:rgba(255,255,255,.35);
-  font-size:13px;font-weight:700;
-  padding:40px 0;
-}
-</style>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
 </head>
-<body>
+<body class="antialiased min-h-screen flex flex-col">
 
-<div class="app-wrap">
-  <div class="hub-header">
-    <div>
-      <div class="hub-title">یارییەکان</div>
-      <div class="hub-sub">یاریت هەڵبژێرە و دەست پێبکە</div>
-    </div>
-  </div>
+    <!-- Header / Navbar -->
+    <header class="bg-darker border-b border-gray-800 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center gap-2 cursor-pointer" onclick="navigate('home')">
+                <i class='bx bx-joystick text-primary text-3xl'></i>
+                <span class="text-2xl font-bold tracking-wide">Kurd<span class="text-primary">Pay</span></span>
+            </div>
+            
+            <!-- Search Bar (Desktop) -->
+            <div class="hidden md:flex flex-1 max-w-xl mx-8 relative">
+                <input type="text" placeholder="گەڕان بۆ یاری، هەژمار، دراو..." class="w-full bg-card border border-gray-700 rounded-lg py-2 px-4 pr-10 text-sm focus:outline-none focus:border-primary transition">
+                <i class='bx bx-search absolute right-3 top-2.5 text-gray-400 text-lg'></i>
+            </div>
 
-  <div class="game-grid" id="gameGrid"></div>
-  <div class="empty-note hidden" id="emptyNote">هێشتا یاری زیاد نەکراوە</div>
-</div>
+            <!-- Auth / User Actions -->
+            <div class="flex items-center gap-4" id="nav-actions">
+                <!-- Injected via JS based on Auth state -->
+            </div>
+        </div>
+    </header>
 
-<script>
-/* ══════════════════════════════════════════════════
-   لیستی یارییەکان — بۆ زیادکردنی یاری نوێ:
-   ١) فایلەکانی یارییەکە لە فۆڵدەرێکی نوێ دابنێ (بۆ نموونە games/newgame/)
-   ٢) ئۆبجێکتێکی نوێ زیاد بکە لەم لیستەی خوارەوە
-   تەواو! پێویست بە هیچ گۆڕانکاریەکی تر نییە.
-   ══════════════════════════════════════════════════ */
-const GAMES = [
-  {
-    id: "sexur",
-    title: "سیخور",
-    folder: "main/game/",       // شوێنی فایلی index.html ی یارییەکە
-    bg: "linear-gradient(150deg,#2a1a1a,#4a1010)",
-    underline: "#ff4d4d",
-    thumb: "", // وێنەیەکی بچووک بۆ کارتەکە (ئارەزوومەندانە)
-    badge: "ONLINE" // "new" | "popular" | ""  یان بەتاڵ بۆ هیچ
-  },
-  {
-    id: "tower",
-    title: "تاوەر",
-    folder: "game/tower/tower.html",       // شوێنی فایلی index.html ی یارییەکە
-    bg: "linear-gradient(150deg,#2a1a1a,#4a1010)",
-    underline: "#ff4d4d",
-    thumb: "", // وێنەیەکی بچووک بۆ کارتەکە (ئارەزوومەندانە)
-    badge: "NEW" // "new" | "popular" | ""  یان بەتاڵ بۆ هیچ
-  },
-  // یاری نوێ لێرە زیاد بکە، بۆ نموونە:
-  // {
-  //   id: "game2",
-  //   title: "ناوی یاریی نوێ",
-  //   folder: "games/game2/",
-  //   bg: "linear-gradient(150deg,#1a2a1a,#103a10)",
-  //   underline: "#4dff88",
-  //   thumb: "games/game2/thumb.webp",
-  //   badge: "new"
-  // },
-];
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto px-4 py-8">
 
-function badgeHtml(badge){
-  if(badge === "new") return `<div class="game-card-badge badge-new">نوێ</div>`;
-  if(badge === "popular") return `<div class="game-card-badge badge-popular">بەناوبانگترین</div>`;
-  return "";
-}
+        <!-- 1. HOME VIEW -->
+        <section id="view-home" class="view-section active">
+            <!-- Hero Section -->
+            <div class="bg-card rounded-2xl p-8 mb-10 flex flex-col md:flex-row items-center justify-between border border-gray-800">
+                <div class="md:w-1/2">
+                    <h1 class="text-3xl md:text-5xl font-bold mb-4 leading-tight">گەورەترین بازاڕی دیجیتاڵی گەیمەران لە کوردستان</h1>
+                    <p class="text-gray-400 mb-6 text-lg">کڕین و فرۆشتنی هەژمار، دراوی یارییەکان و کەلوپەلی دیجیتاڵی بە پارێزراوی و خێرایی.</p>
+                    <button class="bg-primary hover:bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2" onclick="navigate('register')">
+                        دەست پێبکە <i class='bx bx-left-arrow-alt'></i>
+                    </button>
+                </div>
+                <div class="md:w-1/3 mt-6 md:mt-0 text-center text-9xl text-gray-800">
+                    <i class='bx bxs-game'></i>
+                </div>
+            </div>
 
-function renderGames(){
-  const grid = document.getElementById('gameGrid');
-  const empty = document.getElementById('emptyNote');
-  if(GAMES.length === 0){
-    grid.innerHTML = "";
-    empty.classList.remove('hidden');
-    return;
-  }
-  empty.classList.add('hidden');
-  grid.innerHTML = GAMES.map(g => `
-    <div class="game-card" style="background:${g.bg}" onclick="openGame('${g.folder}')">
-      ${badgeHtml(g.badge)}
-      <div class="game-card-title">${g.title}</div>
-      <div class="game-card-underline" style="background:${g.underline}"></div>
-      ${g.thumb ? `<div class="game-card-art"><img src="${g.thumb}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
-    </div>
-  `).join('');
-}
+            <!-- Categories -->
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2"><i class='bx bx-category text-primary'></i> پۆلەکان</h2>
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-10" id="home-categories">
+                <!-- Rendered via JS -->
+            </div>
 
-function openGame(folder){
-  if('vibrate' in navigator) navigator.vibrate(10);
-  window.location.href = folder;
-}
+            <!-- Popular Games -->
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2"><i class='bx bx-star text-primary'></i> یارییە باوەکان</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10" id="home-games">
+                <!-- Rendered via JS -->
+            </div>
 
-renderGames();
-</script>
+            <!-- Latest Products -->
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2"><i class='bx bx-time-five text-primary'></i> نوێترین بەرهەمەکان</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6" id="home-products">
+                <!-- Rendered via JS -->
+            </div>
+        </section>
+
+        <!-- 2. GAME PAGE VIEW -->
+        <section id="view-game" class="view-section">
+            <button onclick="navigate('home')" class="text-gray-400 hover:text-white mb-6 flex items-center gap-2"><i class='bx bx-right-arrow-alt'></i> گەڕانەوە</button>
+            <div class="bg-card rounded-xl p-6 border border-gray-800 mb-8 flex items-center gap-6">
+                <div class="w-24 h-24 bg-gray-800 rounded-lg flex items-center justify-center text-4xl" id="game-page-img"></div>
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" id="game-page-title">ناوی یاری</h1>
+                    <p class="text-gray-400" id="game-page-desc">بازاڕی تایبەت بەم یارییە</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-4 mb-6 overflow-x-auto pb-2">
+                <button class="bg-primary px-4 py-2 rounded-lg text-sm whitespace-nowrap">هەمووی</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">هەژمار (Accounts)</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">دراو (Currency)</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6" id="game-products-list">
+                <!-- Rendered via JS -->
+            </div>
+        </section>
+
+        <!-- 3. PRODUCT PAGE VIEW -->
+        <section id="view-product" class="view-section">
+            <button onclick="navigate('home')" class="text-gray-400 hover:text-white mb-6 flex items-center gap-2"><i class='bx bx-right-arrow-alt'></i> گەڕانەوە</button>
+            <div class="grid md:grid-cols-2 gap-10">
+                <!-- Image -->
+                <div class="bg-card border border-gray-800 rounded-xl h-80 flex items-center justify-center text-8xl text-gray-700">
+                    <i class='bx bx-image-alt'></i>
+                </div>
+                <!-- Details -->
+                <div>
+                    <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded mb-4 inline-block">GTA V / دراو</span>
+                    <h1 class="text-3xl font-bold mb-4">فرۆشتنی 10 ملیۆن پارەی GTA Online سەلامەت</h1>
+                    <div class="text-3xl text-green-400 font-bold mb-6">15,000 IQD</div>
+                    
+                    <div class="bg-card border border-gray-800 p-4 rounded-xl mb-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center"><i class='bx bx-user'></i></div>
+                            <div>
+                                <h4 class="font-semibold text-lg">KurdGamer99</h4>
+                                <div class="text-yellow-400 text-sm"><i class='bx bxs-star'></i> 4.9 (120 فرۆشتن)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-400 mb-2">
+                            <i class='bx bx-time'></i> کاتی گەیاندن: ١ تا ٢ کاتژمێر
+                        </div>
+                    </div>
+
+                    <p class="text-gray-300 mb-8 leading-relaxed">
+                        ئەم بڕە پارەیە بە شێوەیەکی سەلامەت و بێ کێشە دەخرێتە سەر هەژمارەکەت. هیچ مەترسییەکی بان تێدا نییە.
+                    </p>
+
+                    <button onclick="navigate('checkout')" class="w-full bg-primary hover:bg-indigo-600 text-white font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition">
+                        <i class='bx bx-cart'></i> ئێستا بکڕە
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. CHECKOUT / ORDER SYSTEM VIEW -->
+        <section id="view-checkout" class="view-section max-w-2xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">پوختەی داواکاری</h2>
+            <div class="bg-card p-6 rounded-xl border border-gray-800 mb-6">
+                <h3 class="font-semibold mb-2">ڕێنماییەکانی پارەدان (Manual Payment)</h3>
+                <p class="text-gray-400 text-sm mb-4">تکایە بڕی <strong class="text-white">15,000 دینار</strong> بنێرە بۆ یەکێک لەم هەژمارانەی خوارەوە. دواتر وێنەی پارەدانەکە لێرە باربکە.</p>
+                
+                <div class="bg-darker p-4 rounded-lg mb-4 text-sm font-mono text-gray-300 border border-gray-800">
+                    <div>FIB / FastPay: 0750 123 4567</div>
+                    <div>ZainCash: 0780 123 4567</div>
+                </div>
+
+                <label class="block mb-2 text-sm text-gray-400">بارکردنی وەسڵی پارەدان (Screenshot)</label>
+                <input type="file" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-indigo-600 border border-gray-700 rounded-lg p-2 bg-darker mb-6 cursor-pointer">
+                
+                <button onclick="alert('داواکارییەکەت سەرکەوتووانە نێردرا بۆ ئەدمین بەمەبەستی پشتڕاستکردنەوە.'); navigate('buyer-dashboard');" class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold">پشتڕاستکردنەوەی داواکاری</button>
+            </div>
+        </section>
+
+        <!-- 5. BUYER DASHBOARD -->
+        <section id="view-buyer-dashboard" class="view-section">
+            <h2 class="text-2xl font-bold mb-6">داشبۆردی کڕیار</h2>
+            <div class="bg-card rounded-xl border border-gray-800 overflow-hidden">
+                <div class="p-6 border-b border-gray-800">
+                    <h3 class="font-semibold">داواکارییەکانی من</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm text-gray-400">
+                        <thead class="bg-darker border-b border-gray-800">
+                            <tr>
+                                <th class="px-6 py-3">ژ.داواکاری</th>
+                                <th class="px-6 py-3">بەرهەم</th>
+                                <th class="px-6 py-3">نرخ</th>
+                                <th class="px-6 py-3">فرۆشیار</th>
+                                <th class="px-6 py-3">دۆخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-800 hover:bg-gray-800">
+                                <td class="px-6 py-4">#ORD-001</td>
+                                <td class="px-6 py-4 text-white">10M GTA Money</td>
+                                <td class="px-6 py-4">15,000 IQD</td>
+                                <td class="px-6 py-4">KurdGamer99</td>
+                                <td class="px-6 py-4"><span class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs">چاوەڕوانی پەسەندکردن</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. SELLER DASHBOARD -->
+        <section id="view-seller-dashboard" class="view-section">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">داشبۆردی فرۆشیار</h2>
+                <button class="bg-primary px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"><i class='bx bx-plus'></i> زیادکردنی بەرهەم</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-card p-6 rounded-xl border border-gray-800">
+                    <div class="text-gray-400 text-sm mb-1">کۆی داهات</div>
+                    <div class="text-2xl font-bold text-green-400">125,000 IQD</div>
+                </div>
+                <div class="bg-card p-6 rounded-xl border border-gray-800">
+                    <div class="text-gray-400 text-sm mb-1">داواکارییە نوێیەکان</div>
+                    <div class="text-2xl font-bold">3</div>
+                </div>
+                <div class="bg-card p-6 rounded-xl border border-gray-800">
+                    <div class="text-gray-400 text-sm mb-1">کۆی بەرهەمەکانم</div>
+                    <div class="text-2xl font-bold">12</div>
+                </div>
+            </div>
+
+            <!-- Active Orders For Seller -->
+            <h3 class="font-semibold mb-4 text-lg">داواکارییە چالاکەکان (بۆ ڕادەستکردن)</h3>
+            <div class="bg-card rounded-xl border border-gray-800 p-4">
+                <div class="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
+                    <div>
+                        <div class="font-bold">#ORD-002: PUBG 600 UC</div>
+                        <div class="text-sm text-gray-400">کڕیار: Ahmed2023 | کاتی کڕین: پێش ١ کاتژمێر</div>
+                    </div>
+                    <button class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm">ڕادەستکردنی زانیاری</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. AUTH (Login/Register) -->
+        <section id="view-auth" class="view-section flex justify-center items-center py-10">
+            <div class="bg-card p-8 rounded-2xl border border-gray-800 w-full max-w-md">
+                <h2 class="text-2xl font-bold mb-6 text-center">چوونەژوورەوە</h2>
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-2">ئیمەیڵ</label>
+                    <input type="email" class="w-full bg-darker border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none" placeholder="name@example.com">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm text-gray-400 mb-2">وشەی نهێنی</label>
+                    <input type="password" class="w-full bg-darker border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none" placeholder="••••••••">
+                </div>
+                <button onclick="loginUser()" class="w-full bg-primary hover:bg-indigo-600 text-white py-3 rounded-lg font-bold transition mb-4">چوونەژوورەوە</button>
+                <div class="text-center text-sm text-gray-400">
+                    هەژمارت نییە؟ <a href="#" class="text-primary hover:underline">هەژمارێکی نوێ دروست بکە</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-darker border-t border-gray-800 mt-auto">
+        <div class="container mx-auto px-4 py-6 text-center text-gray-500 text-sm">
+            &copy; 2026 KurdPay. دروستکراوە بۆ گەیمەرانی کوردستان.
+        </div>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+        // --- 1. SUPABASE CONFIGURATION (Insert your keys here) ---
+        const SUPABASE_URL = 'https://cypmyoxtvcszlqnwesgc.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_A6ARYsLY6-3EAS03GLxPcg_R4JGLkjL';
+        
+        let supabase = null;
+        if(SUPABASE_URL !== 'https://cypmyoxtvcszlqnwesgc.supabase.co') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+
+        // --- 2. STATE & MOCK DATA (Fallback if no DB) ---
+        let currentUser = null; // null, 'buyer', 'seller', 'admin'
+
+        const mockGames = [
+            { id: 1, name: 'PUBG Mobile', icon: 'bx-target-lock' },
+            { id: 2, name: 'GTA V', icon: 'bx-car' },
+            { id: 3, name: 'Free Fire', icon: 'bx-flame' },
+            { id: 4, name: 'FC 24', icon: 'bx-football' },
+            { id: 5, name: 'Minecraft', icon: 'bx-cube-alt' },
+            { id: 6, name: 'Call of Duty', icon: 'bx-crosshair' }
+        ];
+
+        const mockCategories = [
+            { id: 1, name: 'هەژمار (Accounts)', icon: 'bx-user-circle' },
+            { id: 2, name: 'دراو (Currency)', icon: 'bx-coin-stack' },
+            { id: 3, name: 'کەلوپەل (Items)', icon: 'bx-box' },
+            { id: 4, name: 'کلیل (Game Keys)', icon: 'bx-key' },
+            { id: 5, name: 'خزمەتگوزاری (Boost)', icon: 'bx-trending-up' }
+        ];
+
+        const mockProducts = [
+            { id: 1, title: 'PUBG 600 UC (خێرا)', price: '12,000', game: 'PUBG Mobile', seller: 'GamerKurd' },
+            { id: 2, title: 'GTA V Modded Account', price: '25,000', game: 'GTA V', seller: 'ProSeller' },
+            { id: 3, title: 'FC 24 1M Coins', price: '8,000', game: 'FC 24', seller: 'FifaKing' },
+            { id: 4, title: 'Minecraft Premium', price: '15,000', game: 'Minecraft', seller: 'KurdishBlock' }
+        ];
+
+        // --- 3. ROUTER & UI LOGIC ---
+        function navigate(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function updateNav() {
+            const nav = document.getElementById('nav-actions');
+            if (!currentUser) {
+                nav.innerHTML = `
+                    <button class="text-sm font-semibold hover:text-primary" onclick="navigate('auth')">چوونەژوورەوە</button>
+                    <button class="bg-primary hover:bg-indigo-600 px-4 py-2 rounded-lg text-sm font-semibold transition" onclick="navigate('auth')">خۆتۆمارکردن</button>
+                `;
+            } else if (currentUser === 'buyer') {
+                nav.innerHTML = `
+                    <button onclick="navigate('buyer-dashboard')" class="hover:text-primary flex items-center gap-1"><i class='bx bxs-dashboard'></i> داشبۆرد</button>
+                    <button onclick="logout()" class="text-red-400 hover:text-red-300 ml-4"><i class='bx bx-log-out'></i></button>
+                `;
+            } else if (currentUser === 'seller') {
+                nav.innerHTML = `
+                    <button onclick="navigate('seller-dashboard')" class="text-green-400 flex items-center gap-1"><i class='bx bx-store'></i> فرۆشگاکەم</button>
+                    <button onclick="logout()" class="text-red-400 hover:text-red-300 ml-4"><i class='bx bx-log-out'></i></button>
+                `;
+            }
+        }
+
+        function loginUser() {
+            // Mocking a login - randomly assign seller or buyer for demonstration
+            currentUser = Math.random() > 0.5 ? 'seller' : 'buyer';
+            updateNav();
+            navigate(currentUser === 'seller' ? 'seller-dashboard' : 'home');
+            alert('بە سەرکەوتوویی چوویتە ژوورەوە وەک: ' + (currentUser === 'seller' ? 'فرۆشیار' : 'کڕیار'));
+        }
+
+        function logout() {
+            currentUser = null;
+            updateNav();
+            navigate('home');
+        }
+
+        // --- 4. RENDER COMPONENTS ---
+        function renderHome() {
+            // Categories
+            const catContainer = document.getElementById('home-categories');
+            catContainer.innerHTML = mockCategories.map(c => `
+                <div class="bg-card border border-gray-800 hover:border-primary cursor-pointer p-4 rounded-xl text-center transition">
+                    <i class='bx ${c.icon} text-3xl mb-2 text-gray-300'></i>
+                    <div class="text-sm">${c.name}</div>
+                </div>
+            `).join('');
+
+            // Games
+            const gameContainer = document.getElementById('home-games');
+            gameContainer.innerHTML = mockGames.map(g => `
+                <div onclick="openGame(${g.id})" class="bg-card border border-gray-800 hover:bg-gray-800 cursor-pointer p-6 rounded-xl flex items-center gap-4 transition group">
+                    <div class="w-12 h-12 bg-gray-700 group-hover:bg-primary rounded-lg flex items-center justify-center text-2xl transition">
+                        <i class='bx ${g.icon}'></i>
+                    </div>
+                    <div class="font-semibold">${g.name}</div>
+                </div>
+            `).join('');
+
+            // Products
+            const prodContainer = document.getElementById('home-products');
+            prodContainer.innerHTML = mockProducts.map(p => `
+                <div onclick="navigate('product')" class="bg-card border border-gray-800 rounded-xl overflow-hidden cursor-pointer hover:border-primary transition flex flex-col">
+                    <div class="h-32 bg-gray-800 flex items-center justify-center text-4xl text-gray-700">
+                        <i class='bx bx-image'></i>
+                    </div>
+                    <div class="p-4 flex-grow flex flex-col justify-between">
+                        <div>
+                            <div class="text-xs text-primary mb-1">${p.game}</div>
+                            <h3 class="font-semibold mb-2 line-clamp-2">${p.title}</h3>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <span class="text-green-400 font-bold">${p.price} IQD</span>
+                            <span class="text-xs text-gray-400 flex items-center gap-1"><i class='bx bx-user'></i> ${p.seller}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openGame(id) {
+            const game = mockGames.find(g => g.id === id);
+            document.getElementById('game-page-title').innerText = game.name;
+            document.getElementById('game-page-img').innerHTML = `<i class='bx ${game.icon}'></i>`;
+            
+            // Populate game products with mock data
+            document.getElementById('game-products-list').innerHTML = document.getElementById('home-products').innerHTML;
+            
+            navigate('game');
+        }
+
+        // --- 5. INITIALIZATION ---
+        window.onload = () => {
+            updateNav();
+            renderHome();
+        };
+    </script>
 </body>
 </html>
