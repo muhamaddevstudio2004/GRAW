@@ -1,570 +1,424 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width,user-scalable=no" />
-    <script src="https://codepen.io/steveg3003/pen/zBVakw"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r83/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
-    <title>GRAW</title>
-    <link rel="icon" href="https://i.ibb.co/M6KTWnf/pic.jpg" />
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KurdPay | بازاڕی دیجیتاڵی گەیمەران</title>
+    
+    <!-- Fonts: Noto Sans Arabic for Kurdish Support -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons: Boxicons (Clean, No Emojis) -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- Tailwind CSS (CDN for Single File) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Noto Sans Arabic"', 'sans-serif'] },
+                    colors: {
+                        primary: '#6366f1', // Indigo accent
+                        dark: '#0f172a',
+                        darker: '#020617',
+                        card: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-    
-    @import url("https://fonts.googleapis.com/css?family=Comfortaa");
-html,
-body {
-  margin: 0;
-  overflow: hidden;
-  height: 100%;
-  width: 100%;
-  position: relative;
-  font-family: "Comfortaa", cursive;
-}
-#container {
-  width: 100%;
-  height: 100%;
-}
-#container #score {
-  position: absolute;
-  top: 20px;
-  width: 100%;
-  text-align: center;
-  font-size: 10vh;
-  transition: transform 0.5s ease;
-  color: #334;
-  transform: translatey(-200px) scale(1);
-}
-#container #game {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-#container .game-over {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 85%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-#container .game-over * {
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  opacity: 0;
-  transform: translatey(-50px);
-  color: #334;
-}
-#container .game-over h2 {
-  margin: 0;
-  padding: 0;
-  font-size: 40px;
-}
-#container .game-ready {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-around;
-}
-#container .game-ready #start-button {
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  opacity: 0;
-  transform: translatey(-50px);
-  border: 3px solid #334;
-  padding: 10px 20px;
-  background-color: transparent;
-  color: #334;
-  font-size: 30px;
-}
-#container #instructions {
-  position: absolute;
-  width: 100%;
-  top: 16vh;
-  left: 0;
-  text-align: center;
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  opacity: 0;
-}
-#container #instructions.hide {
-  opacity: 0 !important;
-}
-#container.playing #score,
-#container.resetting #score {
-  transform: translatey(0px) scale(1);
-}
-#container.playing #instructions {
-  opacity: 1;
-}
-#container.ready .game-ready #start-button {
-  opacity: 1;
-  transform: translatey(0);
-}
-#container.ended #score {
-  transform: translatey(6vh) scale(1.5);
-}
-#container.ended .game-over * {
-  opacity: 1;
-  transform: translatey(0);
-}
-#container.ended .game-over p {
-  transition-delay: 0.3s;
-}
-    
+        body { background-color: #0f172a; color: #f8fafc; }
+        .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
-  </head>
-  <body>
-    <script src="script.js" async></script>
-    <div id="container">
-      <div id="game"></div>
-      <div id="score">0</div>
-      <div id="instructions">
-        Click (or press the spacebar) to place the block
-      </div>
-      <div class="game-over">
-        <h2>Game Over</h2>
-        <p>You did great, you're the best.</p>
-        <p>Click or spacebar to start again</p>
-      </div>
-      <div class="game-ready">
-        <div id="start-button">Start</div>
-        <div></div>
-      </div>
-    </div>
-    <footer>Project By -: TANAY PADAR</footer>
-    
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-darker border-b border-gray-800 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center gap-2 cursor-pointer" onclick="navigate('home')">
+                <i class='bx bx-joystick text-primary text-3xl'></i>
+                <span class="text-2xl font-bold tracking-wide">Kurd<span class="text-primary">Pay</span></span>
+            </div>
+            
+            <!-- Search Bar (Desktop) -->
+            <div class="hidden md:flex flex-1 max-w-xl mx-8 relative">
+                <input type="text" placeholder="گەڕان بۆ یاری، هەژمار، دراو..." class="w-full bg-card border border-gray-700 rounded-lg py-2 px-4 pr-10 text-sm focus:outline-none focus:border-primary transition">
+                <i class='bx bx-search absolute right-3 top-2.5 text-gray-400 text-lg'></i>
+            </div>
+
+            <!-- Auth / User Actions -->
+            <div class="flex items-center gap-4" id="nav-actions">
+                <!-- Injected via JS based on Auth state -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+
+        <!-- 1. HOME VIEW -->
+        <section id="view-home" class="view-section active">
+            <!-- Hero Section -->
+            <div class="bg-card rounded-2xl p-8 mb-10 flex flex-col md:flex-row items-center justify-between border border-gray-800">
+                <div class="md:w-1/2">
+                    <h1 class="text-3xl md:text-5xl font-bold mb-4 leading-tight">گەورەترین بازاڕی دیجیتاڵی گەیمەران لە کوردستان</h1>
+                    <p class="text-gray-400 mb-6 text-lg">کڕین و فرۆشتنی هەژمار، دراوی یارییەکان و کەلوپەلی دیجیتاڵی بە پارێزراوی و خێرایی.</p>
+                    <button class="bg-primary hover:bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2" onclick="navigate('register')">
+                        دەست پێبکە <i class='bx bx-left-arrow-alt'></i>
+                    </button>
+                </div>
+                <div class="md:w-1/3 mt-6 md:mt-0 text-center text-9xl text-gray-800">
+                    <i class='bx bxs-game'></i>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2"><i class='bx bx-category text-primary'></i> پۆلەکان</h2>
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-10" id="home-categories">
+                <!-- Rendered via JS -->
+            </div>
+
+            <!-- Popular Games -->
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2"><i class='bx bx-star text-primary'></i> یارییە باوەکان</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10" id="home-games">
+                <!-- Rendered via JS -->
+            </div>
+
+            <!-- Latest Products -->
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2"><i class='bx bx-time-five text-primary'></i> نوێترین بەرهەمەکان</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6" id="home-products">
+                <!-- Rendered via JS -->
+            </div>
+        </section>
+
+        <!-- 2. GAME PAGE VIEW -->
+        <section id="view-game" class="view-section">
+            <button onclick="navigate('home')" class="text-gray-400 hover:text-white mb-6 flex items-center gap-2"><i class='bx bx-right-arrow-alt'></i> گەڕانەوە</button>
+            <div class="bg-card rounded-xl p-6 border border-gray-800 mb-8 flex items-center gap-6">
+                <div class="w-24 h-24 bg-gray-800 rounded-lg flex items-center justify-center text-4xl" id="game-page-img"></div>
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" id="game-page-title">ناوی یاری</h1>
+                    <p class="text-gray-400" id="game-page-desc">بازاڕی تایبەت بەم یارییە</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-4 mb-6 overflow-x-auto pb-2">
+                <button class="bg-primary px-4 py-2 rounded-lg text-sm whitespace-nowrap">هەمووی</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">هەژمار (Accounts)</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">دراو (Currency)</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6" id="game-products-list">
+                <!-- Rendered via JS -->
+            </div>
+        </section>
+
+        <!-- 3. PRODUCT PAGE VIEW -->
+        <section id="view-product" class="view-section">
+            <button onclick="navigate('home')" class="text-gray-400 hover:text-white mb-6 flex items-center gap-2"><i class='bx bx-right-arrow-alt'></i> گەڕانەوە</button>
+            <div class="grid md:grid-cols-2 gap-10">
+                <!-- Image -->
+                <div class="bg-card border border-gray-800 rounded-xl h-80 flex items-center justify-center text-8xl text-gray-700">
+                    <i class='bx bx-image-alt'></i>
+                </div>
+                <!-- Details -->
+                <div>
+                    <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded mb-4 inline-block">GTA V / دراو</span>
+                    <h1 class="text-3xl font-bold mb-4">فرۆشتنی 10 ملیۆن پارەی GTA Online سەلامەت</h1>
+                    <div class="text-3xl text-green-400 font-bold mb-6">15,000 IQD</div>
+                    
+                    <div class="bg-card border border-gray-800 p-4 rounded-xl mb-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center"><i class='bx bx-user'></i></div>
+                            <div>
+                                <h4 class="font-semibold text-lg">KurdGamer99</h4>
+                                <div class="text-yellow-400 text-sm"><i class='bx bxs-star'></i> 4.9 (120 فرۆشتن)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-400 mb-2">
+                            <i class='bx bx-time'></i> کاتی گەیاندن: ١ تا ٢ کاتژمێر
+                        </div>
+                    </div>
+
+                    <p class="text-gray-300 mb-8 leading-relaxed">
+                        ئەم بڕە پارەیە بە شێوەیەکی سەلامەت و بێ کێشە دەخرێتە سەر هەژمارەکەت. هیچ مەترسییەکی بان تێدا نییە.
+                    </p>
+
+                    <button onclick="navigate('checkout')" class="w-full bg-primary hover:bg-indigo-600 text-white font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition">
+                        <i class='bx bx-cart'></i> ئێستا بکڕە
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. CHECKOUT / ORDER SYSTEM VIEW -->
+        <section id="view-checkout" class="view-section max-w-2xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">پوختەی داواکاری</h2>
+            <div class="bg-card p-6 rounded-xl border border-gray-800 mb-6">
+                <h3 class="font-semibold mb-2">ڕێنماییەکانی پارەدان (Manual Payment)</h3>
+                <p class="text-gray-400 text-sm mb-4">تکایە بڕی <strong class="text-white">15,000 دینار</strong> بنێرە بۆ یەکێک لەم هەژمارانەی خوارەوە. دواتر وێنەی پارەدانەکە لێرە باربکە.</p>
+                
+                <div class="bg-darker p-4 rounded-lg mb-4 text-sm font-mono text-gray-300 border border-gray-800">
+                    <div>FIB / FastPay: 0750 123 4567</div>
+                    <div>ZainCash: 0780 123 4567</div>
+                </div>
+
+                <label class="block mb-2 text-sm text-gray-400">بارکردنی وەسڵی پارەدان (Screenshot)</label>
+                <input type="file" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-indigo-600 border border-gray-700 rounded-lg p-2 bg-darker mb-6 cursor-pointer">
+                
+                <button onclick="alert('داواکارییەکەت سەرکەوتووانە نێردرا بۆ ئەدمین بەمەبەستی پشتڕاستکردنەوە.'); navigate('buyer-dashboard');" class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold">پشتڕاستکردنەوەی داواکاری</button>
+            </div>
+        </section>
+
+        <!-- 5. BUYER DASHBOARD -->
+        <section id="view-buyer-dashboard" class="view-section">
+            <h2 class="text-2xl font-bold mb-6">داشبۆردی کڕیار</h2>
+            <div class="bg-card rounded-xl border border-gray-800 overflow-hidden">
+                <div class="p-6 border-b border-gray-800">
+                    <h3 class="font-semibold">داواکارییەکانی من</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm text-gray-400">
+                        <thead class="bg-darker border-b border-gray-800">
+                            <tr>
+                                <th class="px-6 py-3">ژ.داواکاری</th>
+                                <th class="px-6 py-3">بەرهەم</th>
+                                <th class="px-6 py-3">نرخ</th>
+                                <th class="px-6 py-3">فرۆشیار</th>
+                                <th class="px-6 py-3">دۆخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-800 hover:bg-gray-800">
+                                <td class="px-6 py-4">#ORD-001</td>
+                                <td class="px-6 py-4 text-white">10M GTA Money</td>
+                                <td class="px-6 py-4">15,000 IQD</td>
+                                <td class="px-6 py-4">KurdGamer99</td>
+                                <td class="px-6 py-4"><span class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs">چاوەڕوانی پەسەندکردن</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. SELLER DASHBOARD -->
+        <section id="view-seller-dashboard" class="view-section">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">داشبۆردی فرۆشیار</h2>
+                <button class="bg-primary px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"><i class='bx bx-plus'></i> زیادکردنی بەرهەم</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-card p-6 rounded-xl border border-gray-800">
+                    <div class="text-gray-400 text-sm mb-1">کۆی داهات</div>
+                    <div class="text-2xl font-bold text-green-400">125,000 IQD</div>
+                </div>
+                <div class="bg-card p-6 rounded-xl border border-gray-800">
+                    <div class="text-gray-400 text-sm mb-1">داواکارییە نوێیەکان</div>
+                    <div class="text-2xl font-bold">3</div>
+                </div>
+                <div class="bg-card p-6 rounded-xl border border-gray-800">
+                    <div class="text-gray-400 text-sm mb-1">کۆی بەرهەمەکانم</div>
+                    <div class="text-2xl font-bold">12</div>
+                </div>
+            </div>
+
+            <!-- Active Orders For Seller -->
+            <h3 class="font-semibold mb-4 text-lg">داواکارییە چالاکەکان (بۆ ڕادەستکردن)</h3>
+            <div class="bg-card rounded-xl border border-gray-800 p-4">
+                <div class="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
+                    <div>
+                        <div class="font-bold">#ORD-002: PUBG 600 UC</div>
+                        <div class="text-sm text-gray-400">کڕیار: Ahmed2023 | کاتی کڕین: پێش ١ کاتژمێر</div>
+                    </div>
+                    <button class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm">ڕادەستکردنی زانیاری</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. AUTH (Login/Register) -->
+        <section id="view-auth" class="view-section flex justify-center items-center py-10">
+            <div class="bg-card p-8 rounded-2xl border border-gray-800 w-full max-w-md">
+                <h2 class="text-2xl font-bold mb-6 text-center">چوونەژوورەوە</h2>
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-2">ئیمەیڵ</label>
+                    <input type="email" class="w-full bg-darker border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none" placeholder="name@example.com">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm text-gray-400 mb-2">وشەی نهێنی</label>
+                    <input type="password" class="w-full bg-darker border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none" placeholder="••••••••">
+                </div>
+                <button onclick="loginUser()" class="w-full bg-primary hover:bg-indigo-600 text-white py-3 rounded-lg font-bold transition mb-4">چوونەژوورەوە</button>
+                <div class="text-center text-sm text-gray-400">
+                    هەژمارت نییە؟ <a href="#" class="text-primary hover:underline">هەژمارێکی نوێ دروست بکە</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-darker border-t border-gray-800 mt-auto">
+        <div class="container mx-auto px-4 py-6 text-center text-gray-500 text-sm">
+            &copy; 2026 KurdPay. دروستکراوە بۆ گەیمەرانی کوردستان.
+        </div>
+    </footer>
+
+    <!-- Application Logic -->
     <script>
+        // --- 1. SUPABASE CONFIGURATION (Insert your keys here) ---
+        const SUPABASE_URL = 'https://cypmyoxtvcszlqnwesgc.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_A6ARYsLY6-3EAS03GLxPcg_R4JGLkjL';
+        
+        let supabase = null;
+        if(SUPABASE_URL !== 'https://cypmyoxtvcszlqnwesgc.supabase.co') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
 
-    console.clear();
-var Stage = /** @class */ (function () {
-  function Stage() {
-    // container
-    var _this = this;
-    this.render = function () {
-      this.renderer.render(this.scene, this.camera);
-    };
-    this.add = function (elem) {
-      this.scene.add(elem);
-    };
-    this.remove = function (elem) {
-      this.scene.remove(elem);
-    };
-    this.container = document.getElementById("game");
-    // renderer
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: false,
-    });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setClearColor("#D0CBC7", 1);
-    this.container.appendChild(this.renderer.domElement);
-    // scene
-    this.scene = new THREE.Scene();
-    // camera
-    var aspect = window.innerWidth / window.innerHeight;
-    var d = 20;
-    this.camera = new THREE.OrthographicCamera(
-      -d * aspect,
-      d * aspect,
-      d,
-      -d,
-      -100,
-      1000
-    );
-    this.camera.position.x = 2;
-    this.camera.position.y = 2;
-    this.camera.position.z = 2;
-    this.camera.lookAt(new THREE.Vector3(0, 0, 0));
-    //light
-    this.light = new THREE.DirectionalLight(0xffffff, 0.5);
-    this.light.position.set(0, 499, 0);
-    this.scene.add(this.light);
-    this.softLight = new THREE.AmbientLight(0xffffff, 0.4);
-    this.scene.add(this.softLight);
-    window.addEventListener("resize", function () {
-      return _this.onResize();
-    });
-    this.onResize();
-  }
-  Stage.prototype.setCamera = function (y, speed) {
-    if (speed === void 0) {
-      speed = 0.3;
-    }
-    TweenLite.to(this.camera.position, speed, {
-      y: y + 4,
-      ease: Power1.easeInOut,
-    });
-    TweenLite.to(this.camera.lookAt, speed, { y: y, ease: Power1.easeInOut });
-  };
-  Stage.prototype.onResize = function () {
-    var viewSize = 30;
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.camera.left = window.innerWidth / -viewSize;
-    this.camera.right = window.innerWidth / viewSize;
-    this.camera.top = window.innerHeight / viewSize;
-    this.camera.bottom = window.innerHeight / -viewSize;
-    this.camera.updateProjectionMatrix();
-  };
-  return Stage;
-})();
-var Block = /** @class */ (function () {
-  function Block(block) {
-    // set size and position
-    this.STATES = { ACTIVE: "active", STOPPED: "stopped", MISSED: "missed" };
-    this.MOVE_AMOUNT = 12;
-    this.dimension = { width: 0, height: 0, depth: 0 };
-    this.position = { x: 0, y: 0, z: 0 };
-    this.targetBlock = block;
-    this.index = (this.targetBlock ? this.targetBlock.index : 0) + 1;
-    this.workingPlane = this.index % 2 ? "x" : "z";
-    this.workingDimension = this.index % 2 ? "width" : "depth";
-    // set the dimensions from the target block, or defaults.
-    this.dimension.width = this.targetBlock
-      ? this.targetBlock.dimension.width
-      : 10;
-    this.dimension.height = this.targetBlock
-      ? this.targetBlock.dimension.height
-      : 2;
-    this.dimension.depth = this.targetBlock
-      ? this.targetBlock.dimension.depth
-      : 10;
-    this.position.x = this.targetBlock ? this.targetBlock.position.x : 0;
-    this.position.y = this.dimension.height * this.index;
-    this.position.z = this.targetBlock ? this.targetBlock.position.z : 0;
-    this.colorOffset = this.targetBlock
-      ? this.targetBlock.colorOffset
-      : Math.round(Math.random() * 100);
-    // set color
-    if (!this.targetBlock) {
-      this.color = 0x333344;
-    } else {
-      var offset = this.index + this.colorOffset;
-      var r = Math.sin(0.3 * offset) * 55 + 200;
-      var g = Math.sin(0.3 * offset + 2) * 55 + 200;
-      var b = Math.sin(0.3 * offset + 4) * 55 + 200;
-      this.color = new THREE.Color(r / 255, g / 255, b / 255);
-    }
-    // state
-    this.state = this.index > 1 ? this.STATES.ACTIVE : this.STATES.STOPPED;
-    // set direction
-    this.speed = -0.1 - this.index * 0.005;
-    if (this.speed < -4) this.speed = -4;
-    this.direction = this.speed;
-    // create block
-    var geometry = new THREE.BoxGeometry(
-      this.dimension.width,
-      this.dimension.height,
-      this.dimension.depth
-    );
-    geometry.applyMatrix(
-      new THREE.Matrix4().makeTranslation(
-        this.dimension.width / 2,
-        this.dimension.height / 2,
-        this.dimension.depth / 2
-      )
-    );
-    this.material = new THREE.MeshToonMaterial({
-      color: this.color,
-      shading: THREE.FlatShading,
-    });
-    this.mesh = new THREE.Mesh(geometry, this.material);
-    this.mesh.position.set(
-      this.position.x,
-      this.position.y + (this.state == this.STATES.ACTIVE ? 0 : 0),
-      this.position.z
-    );
-    if (this.state == this.STATES.ACTIVE) {
-      this.position[this.workingPlane] =
-        Math.random() > 0.5 ? -this.MOVE_AMOUNT : this.MOVE_AMOUNT;
-    }
-  }
-  Block.prototype.reverseDirection = function () {
-    this.direction = this.direction > 0 ? this.speed : Math.abs(this.speed);
-  };
-  Block.prototype.place = function () {
-    this.state = this.STATES.STOPPED;
-    var overlap =
-      this.targetBlock.dimension[this.workingDimension] -
-      Math.abs(
-        this.position[this.workingPlane] -
-          this.targetBlock.position[this.workingPlane]
-      );
-    var blocksToReturn = {
-      plane: this.workingPlane,
-      direction: this.direction,
-    };
-    if (this.dimension[this.workingDimension] - overlap < 0.3) {
-      overlap = this.dimension[this.workingDimension];
-      blocksToReturn.bonus = true;
-      this.position.x = this.targetBlock.position.x;
-      this.position.z = this.targetBlock.position.z;
-      this.dimension.width = this.targetBlock.dimension.width;
-      this.dimension.depth = this.targetBlock.dimension.depth;
-    }
-    if (overlap > 0) {
-      var choppedDimensions = {
-        width: this.dimension.width,
-        height: this.dimension.height,
-        depth: this.dimension.depth,
-      };
-      choppedDimensions[this.workingDimension] -= overlap;
-      this.dimension[this.workingDimension] = overlap;
-      var placedGeometry = new THREE.BoxGeometry(
-        this.dimension.width,
-        this.dimension.height,
-        this.dimension.depth
-      );
-      placedGeometry.applyMatrix(
-        new THREE.Matrix4().makeTranslation(
-          this.dimension.width / 2,
-          this.dimension.height / 2,
-          this.dimension.depth / 2
-        )
-      );
-      var placedMesh = new THREE.Mesh(placedGeometry, this.material);
-      var choppedGeometry = new THREE.BoxGeometry(
-        choppedDimensions.width,
-        choppedDimensions.height,
-        choppedDimensions.depth
-      );
-      choppedGeometry.applyMatrix(
-        new THREE.Matrix4().makeTranslation(
-          choppedDimensions.width / 2,
-          choppedDimensions.height / 2,
-          choppedDimensions.depth / 2
-        )
-      );
-      var choppedMesh = new THREE.Mesh(choppedGeometry, this.material);
-      var choppedPosition = {
-        x: this.position.x,
-        y: this.position.y,
-        z: this.position.z,
-      };
-      if (
-        this.position[this.workingPlane] <
-        this.targetBlock.position[this.workingPlane]
-      ) {
-        this.position[this.workingPlane] = this.targetBlock.position[
-          this.workingPlane
+        // --- 2. STATE & MOCK DATA (Fallback if no DB) ---
+        let currentUser = null; // null, 'buyer', 'seller', 'admin'
+
+        const mockGames = [
+            { id: 1, name: 'PUBG Mobile', icon: 'bx-target-lock' },
+            { id: 2, name: 'GTA V', icon: 'bx-car' },
+            { id: 3, name: 'Free Fire', icon: 'bx-flame' },
+            { id: 4, name: 'FC 24', icon: 'bx-football' },
+            { id: 5, name: 'Minecraft', icon: 'bx-cube-alt' },
+            { id: 6, name: 'Call of Duty', icon: 'bx-crosshair' }
         ];
-      } else {
-        choppedPosition[this.workingPlane] += overlap;
-      }
-      placedMesh.position.set(
-        this.position.x,
-        this.position.y,
-        this.position.z
-      );
-      choppedMesh.position.set(
-        choppedPosition.x,
-        choppedPosition.y,
-        choppedPosition.z
-      );
-      blocksToReturn.placed = placedMesh;
-      if (!blocksToReturn.bonus) blocksToReturn.chopped = choppedMesh;
-    } else {
-      this.state = this.STATES.MISSED;
-    }
-    this.dimension[this.workingDimension] = overlap;
-    return blocksToReturn;
-  };
-  Block.prototype.tick = function () {
-    if (this.state == this.STATES.ACTIVE) {
-      var value = this.position[this.workingPlane];
-      if (value > this.MOVE_AMOUNT || value < -this.MOVE_AMOUNT)
-        this.reverseDirection();
-      this.position[this.workingPlane] += this.direction;
-      this.mesh.position[this.workingPlane] = this.position[this.workingPlane];
-    }
-  };
-  return Block;
-})();
-var Game = /** @class */ (function () {
-  function Game() {
-    var _this = this;
-    this.STATES = {
-      LOADING: "loading",
-      PLAYING: "playing",
-      READY: "ready",
-      ENDED: "ended",
-      RESETTING: "resetting",
-    };
-    this.blocks = [];
-    this.state = this.STATES.LOADING;
-    this.stage = new Stage();
-    this.mainContainer = document.getElementById("container");
-    this.scoreContainer = document.getElementById("score");
-    this.startButton = document.getElementById("start-button");
-    this.instructions = document.getElementById("instructions");
-    this.scoreContainer.innerHTML = "0";
-    this.newBlocks = new THREE.Group();
-    this.placedBlocks = new THREE.Group();
-    this.choppedBlocks = new THREE.Group();
-    this.stage.add(this.newBlocks);
-    this.stage.add(this.placedBlocks);
-    this.stage.add(this.choppedBlocks);
-    this.addBlock();
-    this.tick();
-    this.updateState(this.STATES.READY);
-    document.addEventListener("keydown", function (e) {
-      if (e.keyCode == 32) _this.onAction();
-    });
-    document.addEventListener("click", function (e) {
-      _this.onAction();
-    });
-    document.addEventListener("touchstart", function (e) {
-      e.preventDefault();
-      // this.onAction();
-      // ☝️ this triggers after click on android so you
-      // insta-lose, will figure it out later.
-    });
-  }
-  Game.prototype.updateState = function (newState) {
-    for (var key in this.STATES)
-      this.mainContainer.classList.remove(this.STATES[key]);
-    this.mainContainer.classList.add(newState);
-    this.state = newState;
-  };
-  Game.prototype.onAction = function () {
-    switch (this.state) {
-      case this.STATES.READY:
-        this.startGame();
-        break;
-      case this.STATES.PLAYING:
-        this.placeBlock();
-        break;
-      case this.STATES.ENDED:
-        this.restartGame();
-        break;
-    }
-  };
-  Game.prototype.startGame = function () {
-    if (this.state != this.STATES.PLAYING) {
-      this.scoreContainer.innerHTML = "0";
-      this.updateState(this.STATES.PLAYING);
-      this.addBlock();
-    }
-  };
-  Game.prototype.restartGame = function () {
-    var _this = this;
-    this.updateState(this.STATES.RESETTING);
-    var oldBlocks = this.placedBlocks.children;
-    var removeSpeed = 0.2;
-    var delayAmount = 0.02;
-    var _loop_1 = function (i) {
-      TweenLite.to(oldBlocks[i].scale, removeSpeed, {
-        x: 0,
-        y: 0,
-        z: 0,
-        delay: (oldBlocks.length - i) * delayAmount,
-        ease: Power1.easeIn,
-        onComplete: function () {
-          return _this.placedBlocks.remove(oldBlocks[i]);
-        },
-      });
-      TweenLite.to(oldBlocks[i].rotation, removeSpeed, {
-        y: 0.5,
-        delay: (oldBlocks.length - i) * delayAmount,
-        ease: Power1.easeIn,
-      });
-    };
-    for (var i = 0; i < oldBlocks.length; i++) {
-      _loop_1(i);
-    }
-    var cameraMoveSpeed = removeSpeed * 2 + oldBlocks.length * delayAmount;
-    this.stage.setCamera(2, cameraMoveSpeed);
-    var countdown = { value: this.blocks.length - 1 };
-    TweenLite.to(countdown, cameraMoveSpeed, {
-      value: 0,
-      onUpdate: function () {
-        _this.scoreContainer.innerHTML = String(Math.round(countdown.value));
-      },
-    });
-    this.blocks = this.blocks.slice(0, 1);
-    setTimeout(function () {
-      _this.startGame();
-    }, cameraMoveSpeed * 1000);
-  };
-  Game.prototype.placeBlock = function () {
-    var _this = this;
-    var currentBlock = this.blocks[this.blocks.length - 1];
-    var newBlocks = currentBlock.place();
-    this.newBlocks.remove(currentBlock.mesh);
-    if (newBlocks.placed) this.placedBlocks.add(newBlocks.placed);
-    if (newBlocks.chopped) {
-      this.choppedBlocks.add(newBlocks.chopped);
-      var positionParams = {
-        y: "-=30",
-        ease: Power1.easeIn,
-        onComplete: function () {
-          return _this.choppedBlocks.remove(newBlocks.chopped);
-        },
-      };
-      var rotateRandomness = 10;
-      var rotationParams = {
-        delay: 0.05,
-        x:
-          newBlocks.plane == "z"
-            ? Math.random() * rotateRandomness - rotateRandomness / 2
-            : 0.1,
-        z:
-          newBlocks.plane == "x"
-            ? Math.random() * rotateRandomness - rotateRandomness / 2
-            : 0.1,
-        y: Math.random() * 0.1,
-      };
-      if (
-        newBlocks.chopped.position[newBlocks.plane] >
-        newBlocks.placed.position[newBlocks.plane]
-      ) {
-        positionParams[newBlocks.plane] =
-          "+=" + 40 * Math.abs(newBlocks.direction);
-      } else {
-        positionParams[newBlocks.plane] =
-          "-=" + 40 * Math.abs(newBlocks.direction);
-      }
-      TweenLite.to(newBlocks.chopped.position, 1, positionParams);
-      TweenLite.to(newBlocks.chopped.rotation, 1, rotationParams);
-    }
-    this.addBlock();
-  };
-  Game.prototype.addBlock = function () {
-    var lastBlock = this.blocks[this.blocks.length - 1];
-    if (lastBlock && lastBlock.state == lastBlock.STATES.MISSED) {
-      return this.endGame();
-    }
-    this.scoreContainer.innerHTML = String(this.blocks.length - 1);
-    var newKidOnTheBlock = new Block(lastBlock);
-    this.newBlocks.add(newKidOnTheBlock.mesh);
-    this.blocks.push(newKidOnTheBlock);
-    this.stage.setCamera(this.blocks.length * 2);
-    if (this.blocks.length >= 5) this.instructions.classList.add("hide");
-  };
-  Game.prototype.endGame = function () {
-    this.updateState(this.STATES.ENDED);
-  };
-  Game.prototype.tick = function () {
-    var _this = this;
-    this.blocks[this.blocks.length - 1].tick();
-    this.stage.render();
-    requestAnimationFrame(function () {
-      _this.tick();
-    });
-  };
-  return Game;
-})();
-var game = new Game();
 
+        const mockCategories = [
+            { id: 1, name: 'هەژمار (Accounts)', icon: 'bx-user-circle' },
+            { id: 2, name: 'دراو (Currency)', icon: 'bx-coin-stack' },
+            { id: 3, name: 'کەلوپەل (Items)', icon: 'bx-box' },
+            { id: 4, name: 'کلیل (Game Keys)', icon: 'bx-key' },
+            { id: 5, name: 'خزمەتگوزاری (Boost)', icon: 'bx-trending-up' }
+        ];
+
+        const mockProducts = [
+            { id: 1, title: 'PUBG 600 UC (خێرا)', price: '12,000', game: 'PUBG Mobile', seller: 'GamerKurd' },
+            { id: 2, title: 'GTA V Modded Account', price: '25,000', game: 'GTA V', seller: 'ProSeller' },
+            { id: 3, title: 'FC 24 1M Coins', price: '8,000', game: 'FC 24', seller: 'FifaKing' },
+            { id: 4, title: 'Minecraft Premium', price: '15,000', game: 'Minecraft', seller: 'KurdishBlock' }
+        ];
+
+        // --- 3. ROUTER & UI LOGIC ---
+        function navigate(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function updateNav() {
+            const nav = document.getElementById('nav-actions');
+            if (!currentUser) {
+                nav.innerHTML = `
+                    <button class="text-sm font-semibold hover:text-primary" onclick="navigate('auth')">چوونەژوورەوە</button>
+                    <button class="bg-primary hover:bg-indigo-600 px-4 py-2 rounded-lg text-sm font-semibold transition" onclick="navigate('auth')">خۆتۆمارکردن</button>
+                `;
+            } else if (currentUser === 'buyer') {
+                nav.innerHTML = `
+                    <button onclick="navigate('buyer-dashboard')" class="hover:text-primary flex items-center gap-1"><i class='bx bxs-dashboard'></i> داشبۆرد</button>
+                    <button onclick="logout()" class="text-red-400 hover:text-red-300 ml-4"><i class='bx bx-log-out'></i></button>
+                `;
+            } else if (currentUser === 'seller') {
+                nav.innerHTML = `
+                    <button onclick="navigate('seller-dashboard')" class="text-green-400 flex items-center gap-1"><i class='bx bx-store'></i> فرۆشگاکەم</button>
+                    <button onclick="logout()" class="text-red-400 hover:text-red-300 ml-4"><i class='bx bx-log-out'></i></button>
+                `;
+            }
+        }
+
+        function loginUser() {
+            // Mocking a login - randomly assign seller or buyer for demonstration
+            currentUser = Math.random() > 0.5 ? 'seller' : 'buyer';
+            updateNav();
+            navigate(currentUser === 'seller' ? 'seller-dashboard' : 'home');
+            alert('بە سەرکەوتوویی چوویتە ژوورەوە وەک: ' + (currentUser === 'seller' ? 'فرۆشیار' : 'کڕیار'));
+        }
+
+        function logout() {
+            currentUser = null;
+            updateNav();
+            navigate('home');
+        }
+
+        // --- 4. RENDER COMPONENTS ---
+        function renderHome() {
+            // Categories
+            const catContainer = document.getElementById('home-categories');
+            catContainer.innerHTML = mockCategories.map(c => `
+                <div class="bg-card border border-gray-800 hover:border-primary cursor-pointer p-4 rounded-xl text-center transition">
+                    <i class='bx ${c.icon} text-3xl mb-2 text-gray-300'></i>
+                    <div class="text-sm">${c.name}</div>
+                </div>
+            `).join('');
+
+            // Games
+            const gameContainer = document.getElementById('home-games');
+            gameContainer.innerHTML = mockGames.map(g => `
+                <div onclick="openGame(${g.id})" class="bg-card border border-gray-800 hover:bg-gray-800 cursor-pointer p-6 rounded-xl flex items-center gap-4 transition group">
+                    <div class="w-12 h-12 bg-gray-700 group-hover:bg-primary rounded-lg flex items-center justify-center text-2xl transition">
+                        <i class='bx ${g.icon}'></i>
+                    </div>
+                    <div class="font-semibold">${g.name}</div>
+                </div>
+            `).join('');
+
+            // Products
+            const prodContainer = document.getElementById('home-products');
+            prodContainer.innerHTML = mockProducts.map(p => `
+                <div onclick="navigate('product')" class="bg-card border border-gray-800 rounded-xl overflow-hidden cursor-pointer hover:border-primary transition flex flex-col">
+                    <div class="h-32 bg-gray-800 flex items-center justify-center text-4xl text-gray-700">
+                        <i class='bx bx-image'></i>
+                    </div>
+                    <div class="p-4 flex-grow flex flex-col justify-between">
+                        <div>
+                            <div class="text-xs text-primary mb-1">${p.game}</div>
+                            <h3 class="font-semibold mb-2 line-clamp-2">${p.title}</h3>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <span class="text-green-400 font-bold">${p.price} IQD</span>
+                            <span class="text-xs text-gray-400 flex items-center gap-1"><i class='bx bx-user'></i> ${p.seller}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openGame(id) {
+            const game = mockGames.find(g => g.id === id);
+            document.getElementById('game-page-title').innerText = game.name;
+            document.getElementById('game-page-img').innerHTML = `<i class='bx ${game.icon}'></i>`;
+            
+            // Populate game products with mock data
+            document.getElementById('game-products-list').innerHTML = document.getElementById('home-products').innerHTML;
+            
+            navigate('game');
+        }
+
+        // --- 5. INITIALIZATION ---
+        window.onload = () => {
+            updateNav();
+            renderHome();
+        };
     </script>
-    <script src="../../main/js/left.js"></script>
-  </body>
+</body>
 </html>
